@@ -12,6 +12,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DRIVER_DIR = REPO_ROOT / "addon" / "synthDrivers" / "mbrola_espeak"
 
-for path in (REPO_ROOT / "tools", DRIVER_DIR):
+for path in (REPO_ROOT / "tools", REPO_ROOT / "tests", DRIVER_DIR):
 	if str(path) not in sys.path:
 		sys.path.insert(0, str(path))

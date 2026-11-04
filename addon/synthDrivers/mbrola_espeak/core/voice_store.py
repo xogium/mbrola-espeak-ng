@@ -1,0 +1,181 @@
+"""The user's collection of imported MBROLA voice databases.
+
+The store is a plain folder (normally ``<NVDA config>/mbrolaVoices``) holding
+one file per database, named exactly as eSpeak NG expects (``en1``,
+``us1``, ...). It lives outside the add-on folder so add-on updates do not
+delete the voices.
+
+Importing accepts either a database file or a ``.zip`` archive containing one
+or more databases (for example a voice downloaded from
+https://github.com/numediart/MBROLA-voices). Every candidate is checked with
+:func:`voice_file.parse_header` before anything is written. Files are written
+to a temporary name and then renamed, so a failed import never leaves a
+half-written voice behind.
+"""
+
+from __future__ import annotations
+
+import dataclasses
+import os
+import re
+import tempfile
+import zipfile
+from collections.abc import Iterable
+from pathlib import Path, PurePosixPath
+from typing import BinaryIO
+
+from .errors import InvalidVoiceFileError, UnknownVoiceNameError, VoiceArchiveError
+from .voice_file import HEADER_PROBE_SIZE, MbrolaVoiceHeader, parse_header, read_header_from_path
+
+_SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
+# Largest real MBROLA databases are around 30 MB. Anything far bigger inside a zip is refused
+# so that a malformed or malicious archive cannot fill the disk.
+MAX_VOICE_BYTES = 256 * 1024 * 1024
+_COPY_CHUNK = 1024 * 1024
+
+
+@dataclasses.dataclass(frozen=True)
+class InstalledVoice:
+	name: str
+	path: Path
+	header: MbrolaVoiceHeader
+
+
+def resolve_database_name(file_name: str, known_names: Iterable[str]) -> str | None:
+	"""Work out which MBROLA database a file is, from its file name.
+
+	``en1`` -> ``en1``; ``en1.dat`` or ``EN1`` -> ``en1``. Returns ``None`` if
+	the name does not match any database eSpeak NG has a definition for.
+	"""
+	known = set(known_names)
+	base = PurePosixPath(file_name.replace("\\", "/")).name
+	candidates = [base, base.lower()]
+	stem = base.split(".", 1)[0]
+	candidates += [stem, stem.lower()]
+	for candidate in candidates:
+		if candidate in known and _SAFE_NAME_RE.match(candidate):
+			return candidate
+	return None
+
+
+class VoiceStore:
+	def __init__(self, root: Path, known_names: Iterable[str]):
+		"""
+		:param root: Folder holding the voices. Created on first import.
+		:param known_names: Database names eSpeak NG has definitions for (from :class:`VoiceCatalog`).
+		"""
+		self._root = Path(root)
+		self._known = frozenset(known_names)
+
+	@property
+	def root(self) -> Path:
+		return self._root
+
+	def installed(self) -> list[InstalledVoice]:
+		"""Valid voices in the store, sorted by name. Invalid or unknown files are ignored."""
+		if not self._root.is_dir():
+			return []
+		voices = []
+		for path in sorted(self._root.iterdir()):
+			if not path.is_file() or path.name not in self._known:
+				continue
+			try:
+				header = read_header_from_path(path)
+			except InvalidVoiceFileError:
+				continue
+			voices.append(InstalledVoice(name=path.name, path=path, header=header))
+		return voices
+
+	def installed_names(self) -> frozenset[str]:
+		return frozenset(v.name for v in self.installed())
+
+	def import_path(self, source: Path, name: str | None = None) -> list[InstalledVoice]:
+		"""Import a voice file or a zip of voice files. Returns what was installed.
+
+		:param name: Database name to use for a single file whose file name is not
+			recognisable (ignored for zip archives).
+		:raises InvalidVoiceFileError, UnknownVoiceNameError, VoiceArchiveError:
+		"""
+		source = Path(source)
+		if zipfile.is_zipfile(source):
+			return self._import_zip(source)
+		return [self._import_file(source, name)]
+
+	def remove(self, name: str) -> None:
+		if name not in self._known:
+			raise UnknownVoiceNameError(f"{name} is not an MBROLA voice name.")
+		path = self._root / name
+		if path.exists():
+			path.unlink()
+
+	def _resolve_name(self, file_name: str, override: str | None) -> str:
+		if override is not None:
+			if override not in self._known or not _SAFE_NAME_RE.match(override):
+				raise UnknownVoiceNameError(f"eSpeak NG has no MBROLA voice named {override}.")
+			return override
+		resolved = resolve_database_name(file_name, self._known)
+		if resolved is None:
+			raise UnknownVoiceNameError(
+				f"Cannot tell which MBROLA voice {file_name} is. "
+				"Keep the original file name, for example en1 or de6.",
+			)
+		return resolved
+
+	def _import_file(self, source: Path, name: str | None) -> InstalledVoice:
+		voice_name = self._resolve_name(source.name, name)
+		header = read_header_from_path(source)
+		try:
+			with open(source, "rb") as f:
+				dest = self._write_atomically(voice_name, f, limit=None)
+		except OSError as e:
+			raise InvalidVoiceFileError(f"Could not copy {source.name}: {e.strerror or e}") from e
+		return InstalledVoice(name=voice_name, path=dest, header=header)
+
+	def _import_zip(self, source: Path) -> list[InstalledVoice]:
+		imported = []
+		try:
+			with zipfile.ZipFile(source) as archive:
+				for info in archive.infolist():
+					voice = self._import_zip_member(archive, info)
+					if voice is not None:
+						imported.append(voice)
+		except (zipfile.BadZipFile, OSError) as e:
+			raise VoiceArchiveError(f"Could not read the archive {source.name}: {e}") from e
+		if not imported:
+			raise VoiceArchiveError(f"{source.name} does not contain any MBROLA voice that eSpeak NG can use.")
+		return imported
+
+	def _import_zip_member(self, archive: zipfile.ZipFile, info: zipfile.ZipInfo) -> InstalledVoice | None:
+		if info.is_dir() or info.file_size > MAX_VOICE_BYTES:
+			return None
+		# Only the base name is ever used, so paths like "../../x" cannot escape the store.
+		voice_name = resolve_database_name(info.filename, self._known)
+		if voice_name is None:
+			return None
+		with archive.open(info) as member:
+			try:
+				header = parse_header(member.read(HEADER_PROBE_SIZE))
+			except InvalidVoiceFileError:
+				return None
+		with archive.open(info) as member:
+			dest = self._write_atomically(voice_name, member, limit=MAX_VOICE_BYTES)
+		return InstalledVoice(name=voice_name, path=dest, header=header)
+
+	def _write_atomically(self, voice_name: str, stream: BinaryIO, limit: int | None) -> Path:
+		self._root.mkdir(parents=True, exist_ok=True)
+		dest = self._root / voice_name
+		fd, tmp_name = tempfile.mkstemp(prefix=f".{voice_name}.", suffix=".partial", dir=self._root)
+		tmp = Path(tmp_name)
+		try:
+			written = 0
+			with os.fdopen(fd, "wb") as out:
+				while chunk := stream.read(_COPY_CHUNK):
+					written += len(chunk)
+					if limit is not None and written > limit:
+						raise VoiceArchiveError(f"{voice_name} is larger than expected; refusing to import it.")
+					out.write(chunk)
+			os.replace(tmp, dest)
+		except BaseException:
+			tmp.unlink(missing_ok=True)
+			raise
+		return dest

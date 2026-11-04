@@ -2,8 +2,13 @@
 #   Windows: mbrola.dll   (the exact API eSpeak NG loads with LoadLibraryA("mbrola.dll"))
 #   Linux:   libmbrola.so (used only by the Linux test harness)
 #
-# Upstream MBROLA has no CMake build. We compile its single-file "unity"
-# wrapper LibOneChannel/lib1.c, which #includes every needed source file.
+# Upstream MBROLA has no CMake build. On Windows we compile exactly the files
+# listed in upstream's own DLL project (VisualC/mbrolalib/mbrolalib.vcxproj),
+# with the same definitions and .def file. Elsewhere we compile the
+# single-file "unity" wrapper LibOneChannel/lib1.c. It cannot be used with
+# MSVC: onechannel.c defines a non-static close_InputFifo() under _MSC_VER,
+# which clashes with the static one from input_fifo.c in a single
+# translation unit.
 #
 # Usage:
 #   cmake -S native/mbrola -B build/mbrola -DMBROLA_SOURCE_DIR=<checkout>
@@ -17,7 +22,21 @@ if(NOT EXISTS "${MBROLA_SOURCE_DIR}/LibOneChannel/lib1.c")
   message(FATAL_ERROR "MBROLA_SOURCE_DIR must point to an MBROLA checkout (got '${MBROLA_SOURCE_DIR}')")
 endif()
 
-add_library(mbrola SHARED "${MBROLA_SOURCE_DIR}/LibOneChannel/lib1.c")
+if(WIN32)
+  set(_mbrola_sources
+    Database/database.c Database/database_old.c Database/diphone_info.c
+    Database/hash_tab.c Database/little_big.c Database/rom_database.c
+    Database/rom_handling.c Database/zstring_list.c
+    Engine/diphone.c Engine/mbrola.c
+    LibOneChannel/onechannel.c
+    Misc/audio.c Misc/common.c Misc/g711.c Misc/mbralloc.c Misc/vp_error.c
+    Parser/fifo.c Parser/input_fifo.c Parser/input_file.c Parser/parser_input.c
+    Parser/phonbuff.c Parser/phone.c)
+  list(TRANSFORM _mbrola_sources PREPEND "${MBROLA_SOURCE_DIR}/")
+  add_library(mbrola SHARED ${_mbrola_sources})
+else()
+  add_library(mbrola SHARED "${MBROLA_SOURCE_DIR}/LibOneChannel/lib1.c")
+endif()
 
 target_include_directories(mbrola PRIVATE
   "${MBROLA_SOURCE_DIR}/Parser"

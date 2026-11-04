@@ -78,7 +78,29 @@ The work is split into three stacked branches, each building on the previous:
 2. `agent/core`: the NVDA-independent core, with unit and end-to-end tests.
 3. `agent/nvda-addon`: the NVDA synth driver, settings panel, packaging.
 
-Merge them into `main` in that order.
+Each branch contains the previous one, so merging `agent/nvda-addon` alone
+brings in everything. Merging them one at a time, in that order, gives the
+same result. Every branch passes its own tests.
+
+## Status and testing
+
+What has been verified, on 64-bit Linux, using the harness that mirrors
+the Windows DLL path:
+
+- MBROLA builds and runs as a 64-bit library; the real en1 and us1 voices
+  speak through eSpeak NG via the add-on's own Python binding.
+- The whole add-on stack (driver, engine, voice import, index reporting,
+  cancel, voice switching, tearing the driver down and creating it again)
+  runs against the real libraries with fake NVDA modules: 145 tests.
+
+Not yet verified:
+
+- The Windows build itself. The CI job `windows-native` builds both DLLs
+  with MSVC x64, checks they are x64, runs the end-to-end tests on Windows
+  and packages the `.nvda-addon`, but it has not been run yet. Push the
+  branches to GitHub to run it.
+- Running inside a real NVDA 2026.3: the settings panel (wx) and audio
+  through nvwave have only been checked against NVDA's source, not run.
 
 ## Known limitations (v0.1)
 
@@ -89,6 +111,5 @@ Merge them into `main` in that order.
   speed. Proper support means synthesizing each language segment
   separately; that is planned.
 - No "rate boost" yet (NVDA's built-in eSpeak uses the sonic library for it).
-- Only tested end-to-end on Linux, through the harness that mirrors the
-  Windows DLL path, plus build checks on Windows in CI. It still needs a
-  real test inside NVDA 2026.3 on Windows.
+- No variants (the "!v" voice variants) yet.
+- Messages in the add-on are ready for translation, but there are no translations yet.

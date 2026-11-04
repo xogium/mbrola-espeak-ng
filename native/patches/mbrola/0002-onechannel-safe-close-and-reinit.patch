@@ -1,0 +1,53 @@
+Make close_MBR() safe to call at any time, and free the old voice in init_MBR().
+
+eSpeak NG drives MBROLA through the one-channel library API
+(init_MBR/close_MBR/...). Two problems in that API:
+
+1. close_MBR() dereferenced its globals unconditionally, so calling it
+   before a voice had been loaded (or twice) crashed. eSpeak NG's POSIX
+   path does exactly that when selecting an MBROLA voice.
+2. init_MBR() overwrote the globals without releasing the previous voice,
+   so every voice switch leaked the whole diphone database (several MB).
+   This is the path eSpeak NG takes on Windows when the user changes
+   voices in NVDA.
+
+close_MBR() now checks and clears each global, and init_rename_MBR()
+calls it first.
+
+diff --git a/LibOneChannel/onechannel.c b/LibOneChannel/onechannel.c
+index 97bb6a2..65c8687 100644
+--- a/LibOneChannel/onechannel.c
++++ b/LibOneChannel/onechannel.c
+@@ -110,6 +110,10 @@ int DLL_EXPORT init_rename_MBR(char *dbaname,char* rename_string,char* clone_str
+ 	freopen("mbrola.log","wt",stderr);
+ #endif
+ 
++	/* Loading a new voice must release the previous one, otherwise every
++	 * voice switch leaks the whole diphone database. */
++	close_MBR();
++
+ 	if (rename_string)
+     {
+ 		rename_list= init_ZStringList();
+@@ -162,13 +166,15 @@ int DLL_EXPORT init_MBR(char *dbaname)
+ }
+ 
+ void DLL_EXPORT close_MBR(void)
+-/*	Free all the allocated memory */
++/*	Free all the allocated memory
++ *	Safe to call when nothing is initialized, and more than once.
++ */
+ {
+-	close_Mbrola(my_brole);
+-	my_parse->close_Parser(my_parse);   /* ... the parser   */
+-	close_InputFifo(my_input);
+-	close_Fifo(my_fifo);
+-	my_dba->close_Database(my_dba); /* ... the database */
++	if (my_brole) { close_Mbrola(my_brole); my_brole= NULL; }
++	if (my_parse) { my_parse->close_Parser(my_parse); my_parse= NULL; }  /* ... the parser   */
++	if (my_input) { close_InputFifo(my_input); my_input= NULL; }
++	if (my_fifo)  { close_Fifo(my_fifo); my_fifo= NULL; }
++	if (my_dba)   { my_dba->close_Database(my_dba); my_dba= NULL; }   /* ... the database */
+ }
+ 
+ int DLL_EXPORT reset_MBR() 

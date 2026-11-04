@@ -1,0 +1,49 @@
+Restore eSpeak NG's own sample rate when leaving an MBROLA voice.
+
+LoadMbrolaTable() sets the global `samplerate` to the MBROLA database
+rate (usually 16000 Hz) when an MBROLA voice is selected. When a normal
+eSpeak voice is selected afterwards it runs `samplerate = samplerate;`,
+a no-op, so every eSpeak voice keeps running at the MBROLA rate. The
+wave generator's presets are computed for the native rate (22050 Hz),
+so those voices then sound worse.
+
+That happens in NVDA whenever an MBROLA voice is used and eSpeak falls
+back to a normal voice, for example on an automatic language switch.
+
+Remember the native rate the first time an MBROLA voice replaces it, and
+put it back.
+
+diff --git a/src/libespeak-ng/synth_mbrola.c b/src/libespeak-ng/synth_mbrola.c
+index d3a198d..f6a58c2 100644
+--- a/src/libespeak-ng/synth_mbrola.c
++++ b/src/libespeak-ng/synth_mbrola.c
+@@ -52,6 +52,9 @@ char mbrola_name[20];
+ 
+ #if USE_MBROLA
+ 
++// eSpeak NG's own sample rate, remembered the first time an MBROLA voice replaces it.
++static int native_samplerate = 0;
++
+ #if defined(_WIN32) || defined(_WIN64)
+ #include <windows.h>
+ #endif
+@@ -87,7 +90,9 @@ espeak_ng_STATUS LoadMbrolaTable(const char *mbrola_voice, const char *phtrans,
+ 	mbr_name_prefix = 0;
+ 
+ 	if (mbrola_voice == NULL) {
+-		samplerate = samplerate;
++		// Return to eSpeak's own rate after an MBROLA voice changed it.
++		if (native_samplerate != 0)
++			samplerate = native_samplerate;
+ 		SetParameter(espeakVOICETYPE, 0, 0);
+ 		return ENS_OK;
+ 	}
+@@ -175,6 +180,8 @@ espeak_ng_STATUS LoadMbrolaTable(const char *mbrola_voice, const char *phtrans,
+ 	fclose(f_in);
+ 
+ 	setVolumeRatio_MBR((float)(mbrola_control & 0xff) /16.0f);
++	if (native_samplerate == 0)
++		native_samplerate = samplerate;
+ 	samplerate = *srate = getFreq_MBR();
+ 	if (*srate == 22050)
+ 		SetParameter(espeakVOICETYPE, 0, 0);

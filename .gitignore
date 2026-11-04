@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+/build/
+/dist/
+*.nvda-addon
+
+# Produced by tools/build_native.py; never committed.
+/addon/synthDrivers/mbrola_espeak/bin/
+/addon/synthDrivers/mbrola_espeak/espeak-ng-data/
+
+# MBROLA voices have their own licences; never commit them.
+/test-voices/

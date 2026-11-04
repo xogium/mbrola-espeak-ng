@@ -1,0 +1,26 @@
+[project]
+name = "nvda-mbrola-espeak"
+version = "0.1.0"
+description = "NVDA add-on: eSpeak NG with MBROLA voices, for 64-bit NVDA 2026.1 and later"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+	"e2e: needs the native libraries from tools/build_native.py --target linux-harness and real MBROLA voices",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.format]
+indent-style = "tab"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["W191", "E501"]

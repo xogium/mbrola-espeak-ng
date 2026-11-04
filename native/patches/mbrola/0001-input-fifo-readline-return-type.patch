@@ -1,0 +1,22 @@
+Fix readline_InputFifo return type to match readline_InputFunction.
+
+Input.readline_Input is declared as returning `long`, but the FIFO
+implementation returned `int`. On LP64 platforms (64-bit Linux, macOS)
+this is undefined behaviour: the caller reads a 64-bit register whose
+upper half is not guaranteed, so a negative error value can turn into a
+large positive one. On Windows x64 (LLP64) `long` and `int` are both
+32 bits, so the bug is latent there, but the compiler still warns and
+the fix is harmless. Only the library (DLL / .so) build uses this code;
+the standalone `mbrola` executable does not.
+
+--- a/Parser/input_fifo.c
++++ b/Parser/input_fifo.c
+@@ -32,7 +32,7 @@
+    directly call with self for all functions, except Close
+ */
+
+-static int readline_InputFifo(Input* in, char *line, int size)
++static long readline_InputFifo(Input* in, char *line, int size)
+ {
+ 	return( readline_Fifo((Fifo*) in->self,line,size) );
+ }

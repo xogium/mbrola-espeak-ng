@@ -58,7 +58,34 @@ jobs:
         run: python tools/build_native.py --target windows --work-dir build --stage-dir build/windows-stage
       - name: Check both DLLs are 64-bit
         run: python tools/check_pe_arch.py build/windows-stage/bin/mbrola.dll build/windows-stage/bin/espeak-ng-mbrola.dll
+      - name: Smoke-test the DLLs from 64-bit Python (load, initialize, list MBROLA voices)
+        shell: bash
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'addon/synthDrivers/mbrola_espeak')
+          from pathlib import Path
+          from core.espeak_binding import EspeakBinding
+          from core.voice_catalog import VoiceCatalog
+          s = Path('build/windows-stage')
+          b = EspeakBinding(s/'bin/espeak-ng-mbrola.dll', s/'bin/mbrola.dll', s)
+          print('eSpeak NG', b.version(), 'rate', b.sample_rate())
+          assert len(VoiceCatalog.load(s/'espeak-ng-data/voices/mb').definitions) > 80
+          assert (s/'espeak-ng-data/mbrola_ph/en1_phtrans').is_file()
+          b.terminate()
+          "
+      - name: Speak with a real MBROLA voice on Windows x64
+        shell: bash
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/numediart/MBROLA-voices.git test-voices
+          git -C test-voices sparse-checkout set data/en1 data/us1
+          python -m pip install pytest
+          MBROLA_ESPEAK_STAGE=build/windows-stage MBROLA_TEST_VOICES=test-voices/data python -m pytest -m e2e -v
+      - name: Package the add-on
+        shell: bash
+        run: |
+          cp -r build/windows-stage/bin build/windows-stage/espeak-ng-data addon/synthDrivers/mbrola_espeak/
+          python tools/build_addon.py --output-dir dist
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-stage
-          path: build/windows-stage
+          name: nvda-addon
+          path: dist/*.nvda-addon

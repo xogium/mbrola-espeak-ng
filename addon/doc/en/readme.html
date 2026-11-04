@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>eSpeak NG with MBROLA voices</title>
+</head>
+<body>
+<main>
+<h1>eSpeak NG with MBROLA voices</h1>
+
+<p>This add-on adds a synthesizer called "eSpeak NG with MBROLA". It speaks
+with MBROLA diphone voices, and eSpeak NG does the reading rules. It needs
+NVDA 2026.1 or later (64-bit).</p>
+
+<h2>Getting a voice</h2>
+<p>Voices are not included, because each one has its own licence. Most are
+free for non-commercial use.</p>
+<ol>
+<li>Download a voice from
+<a href="https://github.com/numediart/MBROLA-voices">github.com/numediart/MBROLA-voices</a>.
+Each voice is in the data folder, for example data/en1/en1 for British English.</li>
+<li>Open the NVDA menu, Preferences, Settings, and choose the "MBROLA voices" category.</li>
+<li>Press "Import voice..." and choose the voice file, or a zip file that contains it.
+You can select several files at once.</li>
+<li>Open the Speech category, change the synthesizer to "eSpeak NG with MBROLA",
+and pick a voice.</li>
+</ol>
+<p>Keep the file's original name, for example en1 or de6. That name is how
+eSpeak NG knows which voice it is.</p>
+
+<h2>Where voices are kept</h2>
+<p>Imported voices are kept in the mbrolaVoices folder inside your NVDA
+configuration folder, so updating the add-on does not remove them. To
+remove a voice, select it in the "MBROLA voices" category and press "Remove voice".</p>
+
+<h2>Known limitations</h2>
+<ul>
+<li>Automatic language switching is not available with this synthesizer yet.</li>
+<li>There is no rate boost yet.</li>
+</ul>
+
+<h2>Licences</h2>
+<p>The add-on is GPL-3.0-or-later. It includes eSpeak NG (GPL-3.0-or-later)
+and the MBROLA engine (AGPL-3.0-or-later). Source code and build
+instructions are in the project repository.</p>
+</main>
+</body>
+</html>

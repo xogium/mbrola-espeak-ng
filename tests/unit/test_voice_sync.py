@@ -1,11 +1,10 @@
 import os
 import shutil
 
-from voice_fixtures import make_voice_bytes
-
 from core.voice_file import parse_header
 from core.voice_store import InstalledVoice
 from core.voice_sync import link_or_copy, sync_voices
+from voice_fixtures import make_voice_bytes
 
 MANAGED = {"en1", "us1", "de6"}
 

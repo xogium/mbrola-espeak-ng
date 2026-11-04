@@ -1,8 +1,7 @@
 import struct
 
-import pytest
-
 import check_pe_arch
+import pytest
 
 
 def make_pe(machine: int, pe_offset: int = 0x80) -> bytes:

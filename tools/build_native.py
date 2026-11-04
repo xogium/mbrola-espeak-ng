@@ -156,9 +156,9 @@ def stage_outputs(target: str, mbrola_build: Path, espeak_build: Path, stage_dir
 
 	Layout (matches ``core/layout.py``)::
 
-	    <stage_dir>/bin/<espeak dll>
-	    <stage_dir>/bin/<mbrola dll>
-	    <stage_dir>/espeak-ng-data/...
+		<stage_dir>/bin/<espeak dll>
+		<stage_dir>/bin/<mbrola dll>
+		<stage_dir>/espeak-ng-data/...
 	"""
 	bin_dir = stage_dir / "bin"
 	bin_dir.mkdir(parents=True, exist_ok=True)

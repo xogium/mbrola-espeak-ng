@@ -1,10 +1,9 @@
 import io
 
 import pytest
-from voice_fixtures import make_voice_bytes
-
 from core.errors import InvalidVoiceFileError
 from core.voice_file import parse_header, read_header, read_header_from_path
+from voice_fixtures import make_voice_bytes
 
 
 def test_parses_new_format_header():

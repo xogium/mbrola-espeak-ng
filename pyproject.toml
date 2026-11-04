@@ -18,6 +18,9 @@ markers = [
 line-length = 120
 target-version = "py311"
 
+# NVDA installs gettext's _() as a builtin.
+builtins = ["_"]
+
 [tool.ruff.format]
 indent-style = "tab"
 

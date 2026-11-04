@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import dataclasses
+import functools
 import queue
 import threading
 from collections.abc import Callable
@@ -195,8 +196,7 @@ class SpeechEngine:
 					continue
 				on_done = None
 				if chunk.index is not None:
-					index = chunk.index
-					on_done = lambda: self._report_index(index, generation)  # noqa: E731
+					on_done = functools.partial(self._report_index, chunk.index, generation)
 				self._sink.feed(block.data[chunk.start : chunk.end], on_done)
 				if not self._is_current(generation):
 					return False

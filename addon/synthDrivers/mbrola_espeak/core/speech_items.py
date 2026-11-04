@@ -8,7 +8,7 @@ these, so the SSML builder can be tested without NVDA.
 from __future__ import annotations
 
 import dataclasses
-from typing import Literal, Union
+from typing import Literal
 
 
 @dataclasses.dataclass(frozen=True)
@@ -53,4 +53,4 @@ class Prosody:
 	multiplier: float
 
 
-SpeechItem = Union[Text, Index, CharacterMode, LangChange, Break, Prosody]
+SpeechItem = Text | Index | CharacterMode | LangChange | Break | Prosody

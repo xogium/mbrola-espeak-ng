@@ -35,7 +35,7 @@ class AddonLayout:
 	mbrola_library_name: str = MBROLA_LIBRARY_NAME
 
 	@classmethod
-	def for_nvda(cls, driver_dir: Path | str, config_dir: Path | str) -> "AddonLayout":
+	def for_nvda(cls, driver_dir: Path | str, config_dir: Path | str) -> AddonLayout:
 		return cls(driver_dir=Path(driver_dir), voice_store_dir=Path(config_dir) / VOICE_STORE_DIR_NAME)
 
 	@property

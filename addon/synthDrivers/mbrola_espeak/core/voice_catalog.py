@@ -71,6 +71,26 @@ def parse_definition(identifier: str, text: str) -> MbrolaVoiceDefinition | None
 	)
 
 
+def choose_default(definitions: list[MbrolaVoiceDefinition], ui_language: str | None) -> MbrolaVoiceDefinition | None:
+	"""Pick the voice that best matches NVDA's language (``en_GB`` style).
+
+	Exact match of language and region first, then language only, then the
+	first voice. Within each group, file order (``language`` lines) decides.
+	"""
+	if not definitions:
+		return None
+	if ui_language:
+		wanted = ui_language.replace("_", "-").lower()
+		base = wanted.split("-", 1)[0]
+		for d in definitions:
+			if wanted in (lang.lower() for lang in d.languages):
+				return d
+		for d in definitions:
+			if any(lang.lower().split("-", 1)[0] == base for lang in d.languages):
+				return d
+	return definitions[0]
+
+
 class VoiceCatalog:
 	"""All MBROLA voice definitions found in one ``voices/mb`` folder."""
 
@@ -78,7 +98,7 @@ class VoiceCatalog:
 		self._definitions = sorted(definitions, key=lambda d: d.identifier)
 
 	@classmethod
-	def load(cls, definitions_dir: Path) -> "VoiceCatalog":
+	def load(cls, definitions_dir: Path) -> VoiceCatalog:
 		definitions = []
 		if definitions_dir.is_dir():
 			for path in definitions_dir.iterdir():

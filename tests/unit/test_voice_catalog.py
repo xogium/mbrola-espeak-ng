@@ -1,6 +1,5 @@
-from voice_fixtures import write_definitions
-
 from core.voice_catalog import VoiceCatalog, parse_definition
+from voice_fixtures import write_definitions
 
 EN1 = """name english-mb-en1
 language en-uk  3
@@ -57,3 +56,21 @@ def test_catalog_load_and_queries(tmp_path):
 
 def test_missing_directory_gives_empty_catalog(tmp_path):
 	assert VoiceCatalog.load(tmp_path / "missing").definitions == ()
+
+
+def _defs(*specs):
+	from core.voice_catalog import MbrolaVoiceDefinition
+
+	return [MbrolaVoiceDefinition(i, i, i[3:], tuple(langs), None) for i, langs in specs]
+
+
+def test_choose_default_prefers_exact_region_then_language():
+	from core.voice_catalog import choose_default
+
+	defs = _defs(("mb-de6", ["de"]), ("mb-en1", ["en-uk", "en"]), ("mb-us1", ["en-us", "en"]))
+	assert choose_default(defs, "en_US").identifier == "mb-us1"
+	assert choose_default(defs, "en_GB").identifier == "mb-en1"  # falls back to language "en"
+	assert choose_default(defs, "de_AT").identifier == "mb-de6"
+	assert choose_default(defs, "ja").identifier == "mb-de6"  # first voice
+	assert choose_default(defs, None).identifier == "mb-de6"
+	assert choose_default([], "en") is None

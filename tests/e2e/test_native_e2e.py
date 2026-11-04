@@ -21,8 +21,6 @@ import threading
 from pathlib import Path
 
 import pytest
-from fakes import RecordingSink
-
 from core.engine import SpeechEngine
 from core.errors import NativeLibraryError
 from core.espeak_binding import EspeakBinding
@@ -32,6 +30,7 @@ from core.speech_items import Index, Text
 from core.ssml import build_ssml
 from core.voice_file import read_header_from_path
 from core.voice_library import VoiceLibrary
+from fakes import RecordingSink
 
 pytestmark = pytest.mark.e2e
 

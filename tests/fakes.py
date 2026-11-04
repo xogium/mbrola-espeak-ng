@@ -27,6 +27,9 @@ class FakeEspeak:
 	def sample_rate(self):
 		return self.rate
 
+	def version(self):
+		return "1.52.0-fake"
+
 	def set_voice(self, identifier):
 		self.calls.append(("set_voice", identifier))
 		if identifier in self.fail_voice:

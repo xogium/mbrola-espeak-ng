@@ -1,5 +1,4 @@
 import pytest
-
 from core.speech_items import Break, CharacterMode, Index, LangChange, Prosody, Text
 from core.ssml import build_ssml, escape_text, normalize_lang
 

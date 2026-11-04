@@ -1,10 +1,9 @@
 import threading
 
 import pytest
-from fakes import FakeEspeak, RecordingSink
-
 from core.engine import SpeechEngine
 from core.params import EspeakParameter
+from fakes import FakeEspeak, RecordingSink
 
 
 class Harness:
@@ -51,6 +50,18 @@ def test_audio_is_split_exactly_at_marks(h):
 	# Block 1: 100 samples, mark at sample 50 -> 100 bytes, then 100 bytes.
 	# Block 2: starts at sample 100, mark at 150 -> 100 bytes, then 100 bytes.
 	assert [len(d) for d in h.sink.fed] == [100, 100, 100, 100]
+
+
+def test_several_marks_in_one_block_report_their_own_index():
+	"""Regression: a closure in the loop used to report the last index for every chunk."""
+	espeak = FakeEspeak(script=[(300, [(1, 50), (2, 100), (3, 200)])])
+	h = Harness(espeak=espeak)
+	try:
+		h.engine.speak("x").result(5)
+		assert h.indexes == [1, 2, 3]
+		assert [len(d) for d in h.sink.fed] == [100, 100, 200, 200]
+	finally:
+		h.engine.terminate()
 
 
 def test_index_fires_only_after_its_audio_played():

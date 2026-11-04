@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from core.audio import Chunk, split_at_marks
 from core.layout import VOICE_STORE_DIR_NAME, AddonLayout
 from core.params import INFLECTION, PITCH, RATE, VOLUME

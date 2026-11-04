@@ -8,7 +8,8 @@ The engine never talks to a sound device. It hands 16-bit mono PCM to an
 from __future__ import annotations
 
 import dataclasses
-from typing import Callable, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
 BYTES_PER_SAMPLE = 2
 

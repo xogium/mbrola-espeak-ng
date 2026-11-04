@@ -1,9 +1,8 @@
 import json
 import subprocess
 
-import pytest
-
 import build_native
+import pytest
 
 
 def test_pins_are_full_commit_hashes():

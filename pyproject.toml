@@ -1,6 +1,6 @@
 [project]
 name = "nvda-mbrola-espeak"
-version = "0.1.0"
+version = "0.2.0"
 description = "NVDA add-on: eSpeak NG with MBROLA voices, for 64-bit NVDA 2026.1 and later"
 requires-python = ">=3.11"
 license = "GPL-3.0-or-later"

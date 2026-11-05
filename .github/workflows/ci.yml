@@ -1,7 +1,9 @@
 name: CI
 
 on:
+  # Pull-request branches are tested by the pull_request event; only main needs push runs.
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -55,7 +57,22 @@ jobs:
           python-version: "3.13"
           architecture: x64
       - name: Build mbrola.dll and espeak-ng-mbrola.dll
-        run: python tools/build_native.py --target windows --work-dir build --stage-dir build/windows-stage
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build
+          python tools/build_native.py --target windows --work-dir build --stage-dir build/windows-stage 2>&1 | tee build/native-build.log
+      - name: Keep the build log if the build failed (download it from the run's Artifacts)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-log
+          path: |
+            build/native-build.log
+            build/windows/**/CMakeFiles/CMakeError.log
+            build/windows/**/CMakeFiles/CMakeOutput.log
+            build/windows/**/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
       - name: Check both DLLs are 64-bit
         run: python tools/check_pe_arch.py build/windows-stage/bin/mbrola.dll build/windows-stage/bin/espeak-ng-mbrola.dll
       - name: Smoke-test the DLLs from 64-bit Python (load, initialize, list MBROLA voices)

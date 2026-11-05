@@ -161,6 +161,12 @@ class State:
 		self.call_after = []
 		self.message_boxes = []
 		self.message_box_answer = 8  # wx.NO
+		self.addon_name = "mbrolaEspeak"
+		self.addon_version = "0.2.0"
+		self.spoken = []  # ui.message
+		self.installed_bundles = []  # gui.addonGui.installAddon
+		self.install_result = True
+		self.restart_prompts = 0
 
 
 def install(state: State | None = None) -> State:
@@ -168,10 +174,14 @@ def install(state: State | None = None) -> State:
 	builtins.__dict__.setdefault("_", lambda s: s)
 
 	modules = {}
-	modules["addonHandler"] = types.SimpleNamespace(initTranslation=lambda: None)
-	modules["globalVars"] = types.SimpleNamespace(
-		appArgs=types.SimpleNamespace(configPath=state.config_path, secure=state.secure),
+	modules["addonHandler"] = types.SimpleNamespace(
+		initTranslation=lambda: None,
+		getCodeAddon=lambda: types.SimpleNamespace(name=state.addon_name, version=state.addon_version),
 	)
+	modules["globalVars"] = types.SimpleNamespace(
+		appArgs=types.SimpleNamespace(configPath=state.config_path, secure=state.secure, launcher=False),
+	)
+	modules["ui"] = types.SimpleNamespace(message=state.spoken.append)
 	modules["languageHandler"] = types.SimpleNamespace(
 		getLanguage=lambda: state.ui_language,
 		getLanguageDescription=lambda lang: {
@@ -229,6 +239,18 @@ def install(state: State | None = None) -> State:
 		return state.message_box_answer
 
 	modules["gui"].messageBox = message_box
+
+	def install_addon(parent, path):
+		# NVDA extracts the bundle while this runs; record what it would have installed.
+		state.installed_bundles.append((Path(path).name, Path(path).read_bytes()))
+		return state.install_result
+
+	def prompt_restart():
+		state.restart_prompts += 1
+
+	modules["gui.addonGui"] = types.SimpleNamespace(installAddon=install_addon, promptUserForRestart=prompt_restart)
+	modules["gui"].addonGui = modules["gui.addonGui"]
+	modules["gui"].mainFrame = types.SimpleNamespace(prePopup=lambda: None, postPopup=lambda: None)
 	state.NVDASettingsDialog = _NVDASettingsDialog
 	for name, module in modules.items():
 		sys.modules[name] = module

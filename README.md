@@ -40,6 +40,11 @@ non-commercial, and you import them in NVDA's settings (see below).
      |         voice_sync.py      mirror the store into espeak-ng-data/mbrola
      |         voice_file.py      MBROLA database header check
      `- globalPlugins/mbrolaVoiceManager/         "MBROLA voices" settings panel
+          |- update_ui.py                         update checks: threads, dialogs, NVDA's installer
+          `- updates/                             no NVDA imports, tested with pytest
+               releases.py        latest GitHub release -> an offer, or none
+               download.py        fetch the package, check size, SHA-256 and manifest
+               schedule.py        "check automatically" setting, once a day
 
 Imported voices are kept in `<NVDA user config>\mbrolaVoices`, so add-on
 updates do not delete them. When the synthesizer starts, they are
@@ -47,6 +52,27 @@ hard-linked (or copied) into the add-on's `espeak-ng-data\mbrola`, which is
 the only place eSpeak NG looks on Windows.
 
 More detail: `docs/ARCHITECTURE.md`. Building: `docs/BUILDING.md`.
+
+## Updates
+
+The add-on updates itself from this repository's GitHub releases. When NVDA
+starts (at most once a day) it asks GitHub for the latest release; if it is
+newer, NVDA asks whether to download and install it. The "MBROLA voices"
+settings category has a "Check for updates now" button and a checkbox to
+turn the automatic check off. A version the user declines is not offered
+again automatically.
+
+The package is only installed if it comes from this repository's release
+downloads, has exactly the announced size and SHA-256, and its manifest
+names this add-on and the offered version. It is then handed to NVDA's own
+add-on installer, which asks for confirmation and checks compatibility.
+Nothing is checked on secure screens or from NVDA's installer.
+
+To publish a release: set the version in `addon/manifest.ini` and
+`pyproject.toml`, merge to `main`, then push a tag such as `v0.3.0`. CI
+builds the add-on, checks that the tag and the package version agree
+(`tools/check_release.py`), and creates the GitHub release with the
+`.nvda-addon` attached. Pre-releases and drafts are never offered.
 
 ## Translations
 

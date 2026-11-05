@@ -11,7 +11,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #. Translators: first-run message of the MBROLA add-on.
-#: globalPlugins/mbrolaVoiceManager/__init__.py:29
+#: globalPlugins/mbrolaVoiceManager/__init__.py:31
 msgid ""
 "No MBROLA voices are installed yet, so the eSpeak NG with MBROLA synthesizer cannot speak. Do you want to open the voice download page in your web browser now?\n"
 "\n"
@@ -25,70 +25,85 @@ msgstr ""
 #. Translators: title of the settings category for managing MBROLA voices.
 #. Translators: title of an error message in the MBROLA voices settings.
 #. Translators: title of the result of importing or removing MBROLA voices.
-#: globalPlugins/mbrolaVoiceManager/__init__.py:35
-#: globalPlugins/mbrolaVoiceManager/panel.py:43
-#: globalPlugins/mbrolaVoiceManager/panel.py:110
-#: globalPlugins/mbrolaVoiceManager/panel.py:156
+#: globalPlugins/mbrolaVoiceManager/__init__.py:37
+#: globalPlugins/mbrolaVoiceManager/panel.py:44
+#: globalPlugins/mbrolaVoiceManager/panel.py:136
+#: globalPlugins/mbrolaVoiceManager/panel.py:182
 msgid "MBROLA voices"
 msgstr "Voix MBROLA"
 
 #. Translators: instructions at the top of the MBROLA voices settings category.
-#: globalPlugins/mbrolaVoiceManager/panel.py:48
+#: globalPlugins/mbrolaVoiceManager/panel.py:49
 msgid "MBROLA voices are not included with this add-on because each has its own licence. Use the button below to open the download page ({url}). Then import a voice file (for example en1), a zip file, or a whole folder: every voice found in the folder and its subfolders is imported. Keep the original file names."
 msgstr "Les voix MBROLA ne sont pas incluses dans cette extension, car chacune a sa propre licence. Utilisez le bouton ci-dessous pour ouvrir la page de téléchargement ({url}). Importez ensuite un fichier de voix (par exemple fr1), un fichier zip ou un dossier entier : toutes les voix trouvées dans le dossier et ses sous-dossiers sont importées. Gardez les noms de fichiers d'origine."
 
 #. Translators: label of the list of installed MBROLA voices.
-#: globalPlugins/mbrolaVoiceManager/panel.py:61
+#: globalPlugins/mbrolaVoiceManager/panel.py:64
 msgid "Installed &voices:"
 msgstr "&Voix installées :"
 
 #. Translators: button that opens the MBROLA voice download page in the web browser.
-#: globalPlugins/mbrolaVoiceManager/panel.py:64
+#: globalPlugins/mbrolaVoiceManager/panel.py:67
 msgid "&Get voices online..."
 msgstr "&Obtenir des voix en ligne..."
 
 #. Translators: button that opens a file dialog to import MBROLA voice files or zips.
-#: globalPlugins/mbrolaVoiceManager/panel.py:66
+#: globalPlugins/mbrolaVoiceManager/panel.py:69
 msgid "&Import files..."
 msgstr "&Importer des fichiers..."
 
 #. Translators: button that imports every MBROLA voice found in a folder.
-#: globalPlugins/mbrolaVoiceManager/panel.py:68
+#: globalPlugins/mbrolaVoiceManager/panel.py:71
 msgid "Import &folder..."
 msgstr "Importer un &dossier..."
 
 #. Translators: button that removes the selected MBROLA voice.
-#: globalPlugins/mbrolaVoiceManager/panel.py:70
+#: globalPlugins/mbrolaVoiceManager/panel.py:73
 msgid "&Remove voice"
 msgstr "&Supprimer la voix"
 
-#. Translators: title of the file dialog for importing MBROLA voices.
+#. Translators: group of settings about updating the MBROLA add-on.
+#: globalPlugins/mbrolaVoiceManager/panel.py:88
+msgid "Add-on updates"
+msgstr "Mises à jour de l'extension"
+
+#. Translators: checkbox that makes the add-on look for a new version on GitHub once a day.
 #: globalPlugins/mbrolaVoiceManager/panel.py:94
+msgid "Check for add-on updates &automatically when NVDA starts"
+msgstr "Rechercher &automatiquement les mises à jour de l'extension au démarrage de NVDA"
+
+#. Translators: button that looks for a new version of the add-on on GitHub now.
+#: globalPlugins/mbrolaVoiceManager/panel.py:98
+msgid "Check for &updates now"
+msgstr "&Rechercher les mises à jour maintenant"
+
+#. Translators: title of the file dialog for importing MBROLA voices.
+#: globalPlugins/mbrolaVoiceManager/panel.py:120
 msgid "Choose MBROLA voice files or zip archives (several can be selected)"
 msgstr "Choisissez des fichiers de voix MBROLA ou des archives zip (vous pouvez en sélectionner plusieurs)"
 
 #. Translators: file type shown in the file dialog for importing MBROLA voices.
-#: globalPlugins/mbrolaVoiceManager/panel.py:96
+#: globalPlugins/mbrolaVoiceManager/panel.py:122
 msgid "MBROLA voices and zip archives"
 msgstr "Voix MBROLA et archives zip"
 
 #. Translators: shown when the web browser could not be opened.
-#: globalPlugins/mbrolaVoiceManager/panel.py:108
+#: globalPlugins/mbrolaVoiceManager/panel.py:134
 msgid "Could not open the web browser. The address is {url}"
 msgstr "Impossible d'ouvrir le navigateur web. L'adresse est {url}"
 
 #. Translators: title of the folder dialog for importing every MBROLA voice in a folder.
-#: globalPlugins/mbrolaVoiceManager/panel.py:119
+#: globalPlugins/mbrolaVoiceManager/panel.py:145
 msgid "Choose a folder containing MBROLA voices"
 msgstr "Choisissez un dossier contenant des voix MBROLA"
 
 #. Translators: asks before removing an MBROLA voice; {name} is the voice, e.g. en1.
-#: globalPlugins/mbrolaVoiceManager/panel.py:136
+#: globalPlugins/mbrolaVoiceManager/panel.py:162
 msgid "Remove the MBROLA voice {name}?"
 msgstr "Supprimer la voix MBROLA {name} ?"
 
 #. Translators: title of the message asking before removing an MBROLA voice.
-#: globalPlugins/mbrolaVoiceManager/panel.py:138
+#: globalPlugins/mbrolaVoiceManager/panel.py:164
 msgid "Confirm removal"
 msgstr "Confirmer la suppression"
 
@@ -131,6 +146,76 @@ msgstr "{name} a été supprimée. Son fichier est encore utilisé et sera effac
 #: globalPlugins/mbrolaVoiceManager/presenter.py:110
 msgid "{name} was removed."
 msgstr "{name} a été supprimée."
+
+#. Translators: title of the messages about updating the MBROLA add-on.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:19
+msgid "MBROLA add-on update"
+msgstr "Mise à jour de l'extension MBROLA"
+
+#. Translators: offers to update the add-on; {new} and {current} are version numbers such as 0.3.0.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:24
+msgid "Version {new} of the eSpeak NG with MBROLA add-on is available. You have version {current}. Do you want to download and install it now? NVDA will then ask you to confirm the installation."
+msgstr "La version {new} de l'extension eSpeak NG avec MBROLA est disponible. Vous avez la version {current}. Voulez-vous la télécharger et l'installer maintenant ? NVDA vous demandera ensuite de confirmer l'installation."
+
+#. Translators: added to the update offer made when NVDA starts.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:29
+msgid "If you choose No, this version will not be offered again when NVDA starts. You can still check for updates in NVDA Settings, MBROLA voices category."
+msgstr "Si vous choisissez Non, cette version ne sera plus proposée au démarrage de NVDA. Vous pourrez toujours rechercher les mises à jour dans les paramètres de NVDA, catégorie Voix MBROLA."
+
+#. Translators: result of checking for updates by hand; {version} is the installed version.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:38
+msgid "You have the latest version of the eSpeak NG with MBROLA add-on ({version})."
+msgstr "Vous avez la dernière version de l'extension eSpeak NG avec MBROLA ({version})."
+
+#. Translators: spoken when an update check or download is already running.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:44
+msgid "The MBROLA add-on is already checking for updates."
+msgstr "L'extension MBROLA recherche déjà des mises à jour."
+
+#. Translators: spoken when the download of an add-on update starts.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:48
+msgid "Downloading the MBROLA add-on update..."
+msgstr "Téléchargement de la mise à jour de l'extension MBROLA..."
+
+#. Translators: {reason} is one of the update problem sentences, e.g. "GitHub could not be reached (timed out)."
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:52
+msgid "Could not check for MBROLA add-on updates. {reason}"
+msgstr "Impossible de rechercher les mises à jour de l'extension MBROLA. {reason}"
+
+#. Translators: {reason} is one of the update problem sentences. Nothing was installed.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:56
+msgid "The MBROLA add-on update was not installed. {reason}"
+msgstr "La mise à jour de l'extension MBROLA n'a pas été installée. {reason}"
+
+#. Translators: an update problem; {detail} is the technical reason, e.g. "timed out".
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:63
+msgid "GitHub could not be reached ({detail})."
+msgstr "Impossible de joindre GitHub ({detail})."
+
+#. Translators: an update problem; {detail} is the technical reason.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:66
+msgid "GitHub's answer could not be understood ({detail})."
+msgstr "La réponse de GitHub est incompréhensible ({detail})."
+
+#. Translators: an update problem: a new release was published without its add-on file.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:69
+msgid "The new release does not contain the add-on package yet. Try again later."
+msgstr "La nouvelle version ne contient pas encore le paquet de l'extension. Réessayez plus tard."
+
+#. Translators: an update problem; {detail} says how much arrived, e.g. "1000 of 2000 bytes".
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:72
+msgid "The download was incomplete ({detail})."
+msgstr "Le téléchargement est incomplet ({detail})."
+
+#. Translators: an update problem: the file's SHA-256 checksum does not match the published one.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:75
+msgid "The downloaded file is damaged: its checksum does not match the published one."
+msgstr "Le fichier téléchargé est endommagé : sa somme de contrôle ne correspond pas à celle publiée."
+
+#. Translators: an update problem; {detail} is the technical reason.
+#: globalPlugins/mbrolaVoiceManager/updates/messages.py:77
+msgid "The downloaded file is not the expected add-on package ({detail})."
+msgstr "Le fichier téléchargé n'est pas le paquet d'extension attendu ({detail})."
 
 #. Translators: voice list entry for a voice reading another language, e.g. "English, with the French voice fr1 (mb-fr1-en)".
 #: synthDrivers/mbrola_espeak/__init__.py:61

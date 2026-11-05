@@ -35,6 +35,8 @@ def f():
 		),
 	)
 	raise Error(N_("Core message {file}"), file="x")
+	# Translators: a presenter's own reference to NVDA's _.
+	return self._("Presenter")
 
 def g():
 	_(f"not {translatable}")
@@ -46,14 +48,21 @@ def g():
 
 def test_extract_finds_messages_comments_and_problems():
 	messages, problems = i18n.extract_from_source(SOURCE, "m.py")
-	assert [m.msgid for m in messages] == ["Hello {name}", "Two parts", "Core message {file}", "Hello {name}"]
+	assert [m.msgid for m in messages] == [
+		"Hello {name}",
+		"Two parts",
+		"Core message {file}",
+		"Presenter",
+		"Hello {name}",
+	]
+	assert messages[3].comments == ["Translators: a presenter's own reference to NVDA's _."]
 	assert messages[0].comments == ["Translators: shown above."]
 	assert messages[1].comments == ["Translators: shown inside the call, over two lines."]
 	assert messages[2].comments == []
 	assert messages[0].locations == ["m.py:4"]
 	assert problems == [
-		"m.py:16: _() needs exactly one plain string literal",
-		"m.py:17: _() needs exactly one plain string literal",
+		"m.py:18: _() needs exactly one plain string literal",
+		"m.py:19: _() needs exactly one plain string literal",
 	]
 
 
@@ -195,10 +204,21 @@ def test_accelerator_keys_are_kept(language):
 			assert entry.msgstr.count("&") == entry.msgid.count("&"), entry.msgid
 
 
-def test_french_settings_panel_accelerators_do_not_clash():
-	t = french()
-	labels = ["Installed &voices:", "&Get voices online...", "&Import files...", "Import &folder...", "&Remove voice"]
-	keys = [t.gettext(label).split("&", 1)[1][0].lower() for label in labels]
+PANEL_LABELS = [
+	"Installed &voices:",
+	"&Get voices online...",
+	"&Import files...",
+	"Import &folder...",
+	"&Remove voice",
+	"Check for add-on updates &automatically when NVDA starts",
+	"Check for &updates now",
+]
+
+
+@pytest.mark.parametrize("language", ["en", "fr"])
+def test_settings_panel_accelerators_do_not_clash(language):
+	translate = french().gettext if language == "fr" else (lambda s: s)
+	keys = [translate(label).split("&", 1)[1][0].lower() for label in PANEL_LABELS]
 	assert len(set(keys)) == len(keys), keys
 
 

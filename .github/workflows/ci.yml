@@ -4,6 +4,9 @@ on:
   # Pull-request branches are tested by the pull_request event; only main needs push runs.
   push:
     branches: [main]
+    # A tag such as v0.3.0 builds the add-on and publishes it as a GitHub release,
+    # which is what the add-on's updater offers to users.
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -108,3 +111,26 @@ jobs:
         with:
           name: nvda-addon
           path: dist/*.nvda-addon
+
+  release:
+    name: Publish the GitHub release (tags v* only)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [unit-tests, linux-harness, windows-native]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release; only this job can write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: nvda-addon
+          path: dist
+      - name: Tag and package version must match (the updater relies on it)
+        run: python tools/check_release.py "$GITHUB_REF_NAME" dist/*.nvda-addon
+      - name: Create the release with the .nvda-addon attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.nvda-addon --title "$GITHUB_REF_NAME" --generate-notes --verify-tag

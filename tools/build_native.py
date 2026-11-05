@@ -40,6 +40,10 @@ STAGED_ESPEAK_DLL = {"windows": "espeak-ng-mbrola.dll", "linux-harness": "libesp
 STAGED_MBROLA_LIB = {"windows": "mbrola.dll", "linux-harness": "libmbrola.so"}
 
 
+# Names left out of the staged espeak-ng-data (matched against every file and folder name).
+STRIPPED_DATA = ("mbrola", "!v")
+
+
 @dataclasses.dataclass(frozen=True)
 class SourcePin:
 	name: str
@@ -179,7 +183,9 @@ def stage_outputs(target: str, mbrola_build: Path, espeak_build: Path, stage_dir
 	if staged["data"].exists():
 		shutil.rmtree(staged["data"])
 	# Never ship voice databases: they have their own licences and are imported by the user.
-	shutil.copytree(data_src, staged["data"], ignore=shutil.ignore_patterns("mbrola"))
+	# Also leave out eSpeak NG's voice variants (voices/!v: Alex, Michael, ...): the add-on
+	# never offers variants, and MBROLA voices cannot use them.
+	shutil.copytree(data_src, staged["data"], ignore=shutil.ignore_patterns(*STRIPPED_DATA))
 	(staged["data"] / "mbrola").mkdir(exist_ok=True)
 	return staged
 

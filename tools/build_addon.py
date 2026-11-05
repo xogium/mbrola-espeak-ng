@@ -49,9 +49,14 @@ def should_include(rel: PurePosixPath) -> bool:
 		return False
 	if rel.suffix == ".so":
 		return False  # Linux test-harness libraries
-	mbrola_dir = DRIVER_REL / "espeak-ng-data" / "mbrola"
-	if len(parts) > len(mbrola_dir.parts) and PurePosixPath(*parts[: len(mbrola_dir.parts)]) == mbrola_dir:
-		return False  # never ship MBROLA voices
+	excluded_dirs = (
+		DRIVER_REL / "espeak-ng-data" / "mbrola",  # never ship MBROLA voices
+		DRIVER_REL / "espeak-ng-data" / "voices" / "!v",  # eSpeak NG variants (Alex, Michael, ...): unused
+	)
+	for excluded in excluded_dirs:
+		n = len(excluded.parts)
+		if len(parts) > n and PurePosixPath(*parts[:n]) == excluded:
+			return False
 	return True
 
 

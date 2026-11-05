@@ -62,7 +62,7 @@ def library(layout) -> VoiceLibrary:
 	lib = VoiceLibrary(layout)
 	en1 = find_voice("en1")
 	assert en1 is not None, "the en1 voice is required for end-to-end tests"
-	for name in ("en1", "us1"):
+	for name in ("en1", "us1", "fr1"):
 		path = find_voice(name)
 		if path:
 			lib.import_path(path)
@@ -142,6 +142,16 @@ def test_every_installed_mbrola_voice_speaks(binding, library):
 		seconds = len(pcm) / 2 / 16000
 		assert 0.5 < seconds < 5, (definition.identifier, seconds)
 		assert peak(pcm) > 1000, definition.identifier
+
+
+def test_cross_language_definitions_speak(binding, library):
+	"""mb-fr1-en is eSpeak NG's 'English text read by the French voice fr1'."""
+	if "fr1" not in library.store.installed_names():
+		pytest.skip("fr1 voice not available")
+	assert library.catalog.is_cross_language(library.catalog.by_identifier("mb-fr1-en"))
+	for identifier in ("mb-fr1", "mb-fr1-en"):
+		binding.set_voice(identifier)
+		assert peak(synth_all(binding, "Bonjour, hello.")) > 1000, identifier
 
 
 def test_uninstalled_mbrola_voice_is_an_error(binding, library):

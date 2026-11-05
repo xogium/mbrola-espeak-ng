@@ -40,10 +40,29 @@ def get_layout() -> AddonLayout:
 	return AddonLayout.for_nvda(DRIVER_DIR, globalVars.appArgs.configPath)
 
 
-def voice_display_name(definition: MbrolaVoiceDefinition) -> str:
-	language = definition.primary_language
-	description = languageHandler.getLanguageDescription(language.replace("-", "_")) if language else None
-	label = description or language or definition.name
+def _describe_language(tag: str | None) -> str | None:
+	if not tag:
+		return None
+	return languageHandler.getLanguageDescription(tag.replace("-", "_")) or tag
+
+
+def voice_display_name(definition: MbrolaVoiceDefinition, home: MbrolaVoiceDefinition | None = None) -> str:
+	"""Name shown in NVDA's voice list.
+
+	``home`` is the voice's own-language definition. When it is given and differs
+	in language (eSpeak NG's ``mb-fr1-en`` reads English with the French voice),
+	the name says so, instead of looking like a duplicate English voice.
+	"""
+	label = _describe_language(definition.primary_language) or definition.name
+	if home is not None:
+		# Translators: voice list entry for a voice reading another language,
+		# e.g. "English, with the French voice fr1 (mb-fr1-en)".
+		return _("{language}, with the {voiceLanguage} voice {database} ({identifier})").format(
+			language=label,
+			voiceLanguage=_describe_language(home.primary_language) or home.name,
+			database=definition.database,
+			identifier=definition.identifier,
+		)
 	return f"{label}, MBROLA {definition.database} ({definition.identifier})"
 
 
@@ -92,7 +111,11 @@ class SynthDriver(BaseSynthDriver):
 			on_done=self._on_done,
 			on_error=self._on_error,
 		)
-		default = choose_default(self._definitions, languageHandler.getLanguage())
+		default = choose_default(
+			self._definitions,
+			languageHandler.getLanguage(),
+			is_cross_language=self._library.catalog.is_cross_language,
+		)
 		self._set_voice(default.identifier)
 		for setting, parameter in (
 			("rate", EspeakParameter.RATE),
@@ -129,10 +152,12 @@ class SynthDriver(BaseSynthDriver):
 	# --- voices -----------------------------------------------------------------
 
 	def _getAvailableVoices(self):
-		return OrderedDict(
-			(d.identifier, VoiceInfo(d.identifier, voice_display_name(d), d.primary_language))
-			for d in self._definitions
-		)
+		catalog = self._library.catalog
+		voices = OrderedDict()
+		for d in self._definitions:
+			home = catalog.home_definition(d.database) if catalog.is_cross_language(d) else None
+			voices[d.identifier] = VoiceInfo(d.identifier, voice_display_name(d, home), d.primary_language)
+		return voices
 
 	def _get_voice(self):
 		return self._engine.voice or ""

@@ -153,6 +153,10 @@ class State:
 		self.synthDoneSpeaking = _Action()
 		self.config_path = "/nonexistent"
 		self.ui_language = "en_US"
+		self.secure = False
+		self.call_after = []
+		self.message_boxes = []
+		self.message_box_answer = 8  # wx.NO
 
 
 def install(state: State | None = None) -> State:
@@ -161,10 +165,18 @@ def install(state: State | None = None) -> State:
 
 	modules = {}
 	modules["addonHandler"] = types.SimpleNamespace(initTranslation=lambda: None)
-	modules["globalVars"] = types.SimpleNamespace(appArgs=types.SimpleNamespace(configPath=state.config_path))
+	modules["globalVars"] = types.SimpleNamespace(
+		appArgs=types.SimpleNamespace(configPath=state.config_path, secure=state.secure),
+	)
 	modules["languageHandler"] = types.SimpleNamespace(
 		getLanguage=lambda: state.ui_language,
-		getLanguageDescription=lambda lang: {"en_uk": "English (UK)", "en_us": "English (US)"}.get(lang.lower()),
+		getLanguageDescription=lambda lang: {
+			"en_uk": "English (UK)",
+			"en_us": "English (US)",
+			"en": "English",
+			"fr": "French",
+			"fr_fr": "French (France)",
+		}.get(lang.lower()),
 	)
 	modules["logHandler"] = types.SimpleNamespace(log=state.log)
 	modules["synthDriverHandler"] = types.SimpleNamespace(
@@ -204,6 +216,15 @@ def install(state: State | None = None) -> State:
 	modules["gui"].settingsDialogs = modules["gui.settingsDialogs"]
 	modules["gui"].guiHelper = modules["gui.guiHelper"]
 	modules["wx"] = types.ModuleType("wx")
+	wx = modules["wx"]
+	wx.YES, wx.NO, wx.YES_NO, wx.OK, wx.ICON_QUESTION, wx.ICON_ERROR, wx.ICON_INFORMATION = 2, 8, 10, 4, 0x400, 0x200, 0x800
+	wx.CallAfter = lambda func, *args, **kwargs: state.call_after.append((func, args, kwargs))
+
+	def message_box(message, caption="", style=0, parent=None):
+		state.message_boxes.append((message, caption, style))
+		return state.message_box_answer
+
+	modules["gui"].messageBox = message_box
 	state.NVDASettingsDialog = _NVDASettingsDialog
 	for name, module in modules.items():
 		sys.modules[name] = module

@@ -20,6 +20,7 @@ is decided by :mod:`voice_store`.
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -71,24 +72,35 @@ def parse_definition(identifier: str, text: str) -> MbrolaVoiceDefinition | None
 	)
 
 
-def choose_default(definitions: list[MbrolaVoiceDefinition], ui_language: str | None) -> MbrolaVoiceDefinition | None:
+def _base_language(tag: str | None) -> str | None:
+	return tag.lower().replace("_", "-").split("-", 1)[0] if tag else None
+
+
+def choose_default(
+	definitions: list[MbrolaVoiceDefinition],
+	ui_language: str | None,
+	is_cross_language: Callable[[MbrolaVoiceDefinition], bool] = lambda d: False,
+) -> MbrolaVoiceDefinition | None:
 	"""Pick the voice that best matches NVDA's language (``en_GB`` style).
 
 	Exact match of language and region first, then language only, then the
-	first voice. Within each group, file order (``language`` lines) decides.
+	first voice. Voices speaking their own language come before cross-language
+	ones (an English user gets mb-en1, not mb-af1-en "English with the
+	Afrikaans voice", even though mb-af1-en sorts first).
 	"""
 	if not definitions:
 		return None
+	ordered = sorted(definitions, key=is_cross_language)  # stable: keeps file order within each group
 	if ui_language:
 		wanted = ui_language.replace("_", "-").lower()
-		base = wanted.split("-", 1)[0]
-		for d in definitions:
+		base = _base_language(wanted)
+		for d in ordered:
 			if wanted in (lang.lower() for lang in d.languages):
 				return d
-		for d in definitions:
-			if any(lang.lower().split("-", 1)[0] == base for lang in d.languages):
+		for d in ordered:
+			if any(_base_language(lang) == base for lang in d.languages):
 				return d
-	return definitions[0]
+	return ordered[0]
 
 
 class VoiceCatalog:
@@ -123,6 +135,24 @@ class VoiceCatalog:
 	def for_databases(self, installed: set[str] | frozenset[str]) -> list[MbrolaVoiceDefinition]:
 		"""Definitions whose database is in ``installed``, i.e. the voices that can speak."""
 		return [d for d in self._definitions if d.database in installed]
+
+	def home_definition(self, database: str) -> MbrolaVoiceDefinition | None:
+		"""The definition for the database's own language: ``mb-fr1`` for ``fr1``.
+
+		eSpeak NG also ships cross-language definitions such as ``mb-fr1-en``
+		("en-french-1"): English text, English reading rules, French voice.
+		"""
+		named = self.by_identifier(f"mb-{database}")
+		if named is not None:
+			return named
+		return next((d for d in self._definitions if d.database == database), None)
+
+	def is_cross_language(self, definition: MbrolaVoiceDefinition) -> bool:
+		"""True for definitions like ``mb-fr1-en`` whose language is not the voice's own."""
+		home = self.home_definition(definition.database)
+		if home is None or home is definition:
+			return False
+		return _base_language(definition.primary_language) != _base_language(home.primary_language)
 
 	def by_identifier(self, identifier: str) -> MbrolaVoiceDefinition | None:
 		for d in self._definitions:

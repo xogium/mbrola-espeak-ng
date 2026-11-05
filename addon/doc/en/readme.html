@@ -16,10 +16,11 @@ NVDA 2026.1 or later (64-bit).</p>
 <p>Voices are not included, because each one has its own licence. Most are
 free for non-commercial use.</p>
 <ol>
-<li>Download a voice from
-<a href="https://github.com/numediart/MBROLA-voices">github.com/numediart/MBROLA-voices</a>.
-Each voice is in the data folder, for example data/en1/en1 for British English.</li>
 <li>Open the NVDA menu, Preferences, Settings, and choose the "MBROLA voices" category.</li>
+<li>Press "Get voices online..." to open the
+<a href="https://github.com/numediart/MBROLA-voices/tree/master/data">MBROLA voice download page</a>.
+Each voice has its own folder there, for example en1 for British English; download the voice file inside it.
+The first time NVDA starts with this add-on and no voices, it offers to open that page for you.</li>
 <li>Press "Import files..." and choose voice files or zip files. You can select several at once.
 Or press "Import folder..." and choose a folder: every voice in it and in its subfolders is imported.
 That is the easiest way to import a downloaded copy of the whole MBROLA-voices collection.</li>
@@ -28,6 +29,13 @@ and pick a voice.</li>
 </ol>
 <p>Keep the file's original name, for example en1 or de6. That name is how
 eSpeak NG knows which voice it is.</p>
+
+<h2>Why some voices appear twice, in two languages</h2>
+<p>eSpeak NG offers some voices in a second language too. For example, besides
+"French (France), MBROLA fr1", there is "English, with the French voice fr1":
+English text, read with English pronunciation rules but by the French fr1 voice.
+The same exists for fr4, several German voices, and others. Both entries use the
+same voice file; choose whichever you prefer.</p>
 
 <h2>Where voices are kept</h2>
 <p>Imported voices are kept in the mbrolaVoices folder inside your NVDA

@@ -12,12 +12,10 @@ from gui import guiHelper, settingsDialogs
 from gui.settingsDialogs import SettingsPanel
 from logHandler import log
 
+from .links import VOICES_DOWNLOAD_URL, open_voices_page
 from .presenter import VoiceManagerPresenter
 
 addonHandler.initTranslation()
-
-VOICES_URL = "https://github.com/numediart/MBROLA-voices"
-
 
 def _make_presenter() -> VoiceManagerPresenter:
 	from synthDrivers.mbrola_espeak import get_layout
@@ -49,10 +47,10 @@ class MbrolaVoicesPanel(SettingsPanel):
 	# Translators: instructions at the top of the MBROLA voices settings category.
 	panelDescription = _(
 		"MBROLA voices are not included with this add-on because each has its own licence. "
-		"Download voices from {url}. Then import a voice file (for example en1), a zip file, "
+		"Use the button below to open the download page ({url}). Then import a voice file (for example en1), a zip file, "
 		"or a whole folder: every voice found in the folder and its subfolders is imported. "
 		"Keep the original file names.",
-	).format(url=VOICES_URL)
+	).format(url=VOICES_DOWNLOAD_URL)
 
 	def makeSettings(self, settingsSizer):
 		self._presenter = _make_presenter()
@@ -62,6 +60,8 @@ class MbrolaVoicesPanel(SettingsPanel):
 		# Translators: label of the list of installed MBROLA voices.
 		self._list = helper.addLabeledControl(_("Installed &voices:"), wx.ListBox, choices=[])
 		buttons = guiHelper.ButtonHelper(wx.HORIZONTAL)
+		# Translators: button that opens the MBROLA voice download page in the web browser.
+		self._website_button = buttons.addButton(self, label=_("&Get voices online..."))
 		# Translators: button that opens a file dialog to import MBROLA voice files or zips.
 		self._import_button = buttons.addButton(self, label=_("&Import files..."))
 		# Translators: button that imports every MBROLA voice found in a folder.
@@ -69,6 +69,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 		# Translators: button that removes the selected MBROLA voice.
 		self._remove_button = buttons.addButton(self, label=_("&Remove voice"))
 		helper.addItem(buttons)
+		self._website_button.Bind(wx.EVT_BUTTON, self._on_open_website)
 		self._import_button.Bind(wx.EVT_BUTTON, self._on_import)
 		self._import_folder_button.Bind(wx.EVT_BUTTON, self._on_import_folder)
 		self._remove_button.Bind(wx.EVT_BUTTON, self._on_remove)
@@ -98,6 +99,16 @@ class MbrolaVoicesPanel(SettingsPanel):
 				return
 			paths = [Path(p) for p in dialog.GetPaths()]
 		self._show(self._presenter.import_files(paths))
+
+	def _on_open_website(self, evt) -> None:
+		if not open_voices_page():
+			gui.messageBox(
+				# Translators: shown when the web browser could not be opened.
+				_("Could not open the web browser. The address is {url}").format(url=VOICES_DOWNLOAD_URL),
+				_("MBROLA voices"),
+				wx.OK | wx.ICON_ERROR,
+				self,
+			)
 
 	def _on_import_folder(self, evt) -> None:
 		with wx.DirDialog(

@@ -102,7 +102,7 @@ Not yet verified:
 - Running inside a real NVDA 2026.3: the settings panel (wx) and audio
   through nvwave have only been checked against NVDA's source, not run.
 
-## Known limitations (v0.1)
+## Known limitations (v0.2)
 
 - Automatic language switching is not offered with this synthesizer. eSpeak
   NG reports unreliable timing when a sentence switches between an MBROLA

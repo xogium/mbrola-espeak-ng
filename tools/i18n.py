@@ -8,8 +8,8 @@ plain Python, so no gettext tools are needed, on Windows or in CI.
 
 Messages are found by reading the add-on's Python files (never importing them):
 
-* ``_("...")`` calls, used by the NVDA layer and the wx-free presenters, which
-  receive NVDA's ``_`` as their ``translate`` argument;
+* ``_("...")`` and ``self._("...")`` calls, used by the NVDA layer and the
+  wx-free presenters, which receive NVDA's ``_`` as their ``translate`` argument;
 * ``N_("...")`` calls, used by ``core`` for error messages it cannot translate
   itself (see ``core/errors.py``).
 
@@ -78,6 +78,17 @@ def _translator_comment(lines: list[str], call_line: int, string_line: int) -> s
 	return None
 
 
+def _marker(node: ast.AST) -> str | None:
+	"""``"_"`` for ``_(...)`` and ``self._(...)`` (presenters keep NVDA's ``_`` as ``self._``), ``"N_"`` for ``N_(...)``."""
+	if not isinstance(node, ast.Call):
+		return None
+	if isinstance(node.func, ast.Name) and node.func.id in MARKERS:
+		return node.func.id
+	if isinstance(node.func, ast.Attribute) and node.func.attr == "_":
+		return "_"
+	return None
+
+
 def extract_from_source(source: str, location: str) -> tuple[list[Message], list[str]]:
 	"""Messages in one Python source, and problems such as ``_(f"...")`` that cannot be translated."""
 	tree = ast.parse(source)
@@ -85,14 +96,15 @@ def extract_from_source(source: str, location: str) -> tuple[list[Message], list
 	messages: list[Message] = []
 	problems: list[str] = []
 	for node in ast.walk(tree):
-		if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in MARKERS):
+		marker = _marker(node)
+		if marker is None:
 			continue
 		where = f"{location}:{node.lineno}"
 		if len(node.args) != 1 or node.keywords or not isinstance(node.args[0], ast.Constant):
-			problems.append(f"{where}: {node.func.id}() needs exactly one plain string literal")
+			problems.append(f"{where}: {marker}() needs exactly one plain string literal")
 			continue
 		if not isinstance(node.args[0].value, str):
-			problems.append(f"{where}: {node.func.id}() needs a string")
+			problems.append(f"{where}: {marker}() needs a string")
 			continue
 		comment = _translator_comment(lines, node.lineno, node.args[0].lineno)
 		messages.append(Message(node.args[0].value, [comment] if comment else [], [where]))

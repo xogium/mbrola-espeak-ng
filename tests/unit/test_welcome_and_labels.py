@@ -99,6 +99,20 @@ def nvda_plugin(tmp_path, monkeypatch):
 	links = importlib.import_module("globalPlugins.mbrolaVoiceManager.links")
 	opened = []
 	monkeypatch.setattr(plugin_mod, "open_voices_page", lambda: opened.append(links.VOICES_DOWNLOAD_URL) or True)
+	# Never go online: GitHub has no release, and the check runs on the calling thread.
+	update_ui = importlib.import_module("globalPlugins.mbrolaVoiceManager.update_ui")
+	monkeypatch.setattr(
+		plugin_mod,
+		"_make_update_controller",
+		lambda: update_ui.UpdateController(
+			"mbrolaEspeak",
+			"0.2.0",
+			tmp_path / "config" / "mbrolaEspeakUpdates.json",
+			fetch_json=lambda url: None,
+			open_url=None,
+			run_in_background=lambda work: work(),
+		),
+	)
 	return state, plugin_mod, layout, opened
 
 

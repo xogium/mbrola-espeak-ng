@@ -7,6 +7,7 @@
       synthDrivers/mbrola_espeak/_nvda_commands.py   NVDA speech commands -> core items
       synthDrivers/mbrola_espeak/_nvda_audio.py      AudioSink on top of nvwave.WavePlayer
       globalPlugins/mbrolaVoiceManager/         settings panel (wx) for importing voices
+      globalPlugins/mbrolaVoiceManager/update_ui.py  update checks: threads, dialogs, NVDA's installer
     ------------------------------------------------------------------ no NVDA below this line
       core/voice_library.py    wiring of catalog + store + sync
       core/engine.py           worker thread, ordering, cancel, index timing
@@ -19,6 +20,11 @@
       core/audio.py            AudioSink protocol, split audio at index marks
       core/params.py           0-100 sliders <-> eSpeak values
       core/layout.py           every path in one place
+      updates/releases.py      GitHub's latest release -> an offer, or none     (globalPlugins/mbrolaVoiceManager/updates)
+      updates/download.py      fetch the package; size, SHA-256 and manifest checks
+      updates/schedule.py      "check automatically" setting, once a day
+      updates/messages.py      what the user is told (translatable)
+      updates/web.py           the only module that touches the network
     ------------------------------------------------------------------ native
       espeak-ng-mbrola.dll  --LoadLibraryA("mbrola.dll")-->  mbrola.dll
 
@@ -29,6 +35,16 @@ Rules:
 - The NVDA modules only translate and wire. All decisions live in `core`.
 - Dependencies inside `core` only point downwards (see `core/__init__.py`).
 - Each core module has one job and its own test file.
+
+## Updates
+
+`update_ui.UpdateController` runs the network work on a background thread
+and comes back to NVDA's main thread with `wx.CallAfter`; only one check or
+download runs at a time. `updates/` decides everything else and is tested
+without NVDA or the network (`fetch_json` and `open_url` are passed in).
+The checked package goes to `gui.addonGui.installAddon`, NVDA's own
+installer for `.nvda-addon` files, so confirmation, compatibility checks
+and the replacement on restart are NVDA's.
 
 ## Translated messages
 

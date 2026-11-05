@@ -1,4 +1,4 @@
-"""The "MBROLA voices" category in NVDA's Settings dialog (wx only, no logic)."""
+"""The "MBROLA voices" category in NVDA's Settings dialog (wx only, no logic): voices and add-on updates."""
 
 from __future__ import annotations
 
@@ -14,8 +14,10 @@ from logHandler import log
 
 from .links import VOICES_DOWNLOAD_URL, open_voices_page
 from .presenter import VoiceManagerPresenter
+from .update_ui import UpdateController
 
 addonHandler.initTranslation()
+
 
 def _make_presenter() -> VoiceManagerPresenter:
 	from synthDrivers.mbrola_espeak import get_layout
@@ -51,6 +53,8 @@ class MbrolaVoicesPanel(SettingsPanel):
 		"or a whole folder: every voice found in the folder and its subfolders is imported. "
 		"Keep the original file names.",
 	).format(url=VOICES_DOWNLOAD_URL)
+	# Set by the global plugin; None where updates are not offered (secure screens).
+	updates: UpdateController | None = None
 
 	def makeSettings(self, settingsSizer):
 		self._presenter = _make_presenter()
@@ -74,7 +78,30 @@ class MbrolaVoicesPanel(SettingsPanel):
 		self._import_folder_button.Bind(wx.EVT_BUTTON, self._on_import_folder)
 		self._remove_button.Bind(wx.EVT_BUTTON, self._on_remove)
 		self._list.Bind(wx.EVT_LISTBOX, lambda evt: self._update_buttons())
+		self._make_update_settings(helper)
 		self._refresh()
+
+	def _make_update_settings(self, helper) -> None:
+		self._auto_update = None
+		if self.updates is None:
+			return
+		# Translators: group of settings about updating the MBROLA add-on.
+		group_sizer = wx.StaticBoxSizer(wx.VERTICAL, self, label=_("Add-on updates"))
+		box = group_sizer.GetStaticBox()
+		group = guiHelper.BoxSizerHelper(self, sizer=group_sizer)
+		helper.addItem(group)
+		self._auto_update = group.addItem(
+			# Translators: checkbox that makes the add-on look for a new version on GitHub once a day.
+			wx.CheckBox(box, label=_("Check for add-on updates &automatically when NVDA starts")),
+		)
+		self._auto_update.SetValue(self.updates.auto_check)
+		# Translators: button that looks for a new version of the add-on on GitHub now.
+		check_button = group.addItem(wx.Button(box, label=_("Check for &updates now")))
+		check_button.Bind(wx.EVT_BUTTON, self._on_check_updates)
+
+	def _on_check_updates(self, evt) -> None:
+		if self.updates is not None:
+			self.updates.check_now()
 
 	def _refresh(self, select: str | None = None) -> None:
 		self._entries = self._presenter.entries()
@@ -106,7 +133,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 			gui.messageBox(
 				# Translators: shown when the web browser could not be opened.
 				_("Could not open the web browser. The address is {url}").format(url=VOICES_DOWNLOAD_URL),
-# Translators: title of an error message in the MBROLA voices settings.
+				# Translators: title of an error message in the MBROLA voices settings.
 				_("MBROLA voices"),
 				wx.OK | wx.ICON_ERROR,
 				self,
@@ -152,12 +179,13 @@ class MbrolaVoicesPanel(SettingsPanel):
 				log.error("Could not reload the MBROLA synthesizer", exc_info=True)
 		gui.messageBox(
 			outcome.message,
-# Translators: title of the result of importing or removing MBROLA voices.
+			# Translators: title of the result of importing or removing MBROLA voices.
 			_("MBROLA voices"),
 			wx.OK | (wx.ICON_ERROR if outcome.is_error else wx.ICON_INFORMATION),
 			self,
 		)
 
 	def onSave(self):
-		# Imports and removals take effect immediately; there is nothing to save.
-		pass
+		# Imports and removals take effect immediately; only the update setting is saved here.
+		if self._auto_update is not None and self.updates is not None:
+			self.updates.auto_check = self._auto_update.IsChecked()

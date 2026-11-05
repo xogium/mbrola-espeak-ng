@@ -1,0 +1,215 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: mbrolaEspeak\n"
+"Report-Msgid-Bugs-To: https://github.com/xogium/mbrola-espeak-ng/issues\n"
+"Last-Translator: Casey Reeves\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. Translators: first-run message of the MBROLA add-on.
+#: globalPlugins/mbrolaVoiceManager/__init__.py:29
+msgid ""
+"No MBROLA voices are installed yet, so the eSpeak NG with MBROLA synthesizer cannot speak. Do you want to open the voice download page in your web browser now?\n"
+"\n"
+"After downloading, import the voices in NVDA Settings, MBROLA voices category."
+msgstr ""
+"Aucune voix MBROLA n'est encore installée : le synthétiseur eSpeak NG avec MBROLA ne peut donc pas parler. Voulez-vous ouvrir maintenant la page de téléchargement des voix dans votre navigateur web ?\n"
+"\n"
+"Après le téléchargement, importez les voix dans les paramètres de NVDA, catégorie Voix MBROLA."
+
+#. Translators: title of the first-run message of the MBROLA add-on.
+#. Translators: title of the settings category for managing MBROLA voices.
+#. Translators: title of an error message in the MBROLA voices settings.
+#. Translators: title of the result of importing or removing MBROLA voices.
+#: globalPlugins/mbrolaVoiceManager/__init__.py:35
+#: globalPlugins/mbrolaVoiceManager/panel.py:43
+#: globalPlugins/mbrolaVoiceManager/panel.py:110
+#: globalPlugins/mbrolaVoiceManager/panel.py:156
+msgid "MBROLA voices"
+msgstr "Voix MBROLA"
+
+#. Translators: instructions at the top of the MBROLA voices settings category.
+#: globalPlugins/mbrolaVoiceManager/panel.py:48
+msgid "MBROLA voices are not included with this add-on because each has its own licence. Use the button below to open the download page ({url}). Then import a voice file (for example en1), a zip file, or a whole folder: every voice found in the folder and its subfolders is imported. Keep the original file names."
+msgstr "Les voix MBROLA ne sont pas incluses dans cette extension, car chacune a sa propre licence. Utilisez le bouton ci-dessous pour ouvrir la page de téléchargement ({url}). Importez ensuite un fichier de voix (par exemple fr1), un fichier zip ou un dossier entier : toutes les voix trouvées dans le dossier et ses sous-dossiers sont importées. Gardez les noms de fichiers d'origine."
+
+#. Translators: label of the list of installed MBROLA voices.
+#: globalPlugins/mbrolaVoiceManager/panel.py:61
+msgid "Installed &voices:"
+msgstr "&Voix installées :"
+
+#. Translators: button that opens the MBROLA voice download page in the web browser.
+#: globalPlugins/mbrolaVoiceManager/panel.py:64
+msgid "&Get voices online..."
+msgstr "&Obtenir des voix en ligne..."
+
+#. Translators: button that opens a file dialog to import MBROLA voice files or zips.
+#: globalPlugins/mbrolaVoiceManager/panel.py:66
+msgid "&Import files..."
+msgstr "&Importer des fichiers..."
+
+#. Translators: button that imports every MBROLA voice found in a folder.
+#: globalPlugins/mbrolaVoiceManager/panel.py:68
+msgid "Import &folder..."
+msgstr "Importer un &dossier..."
+
+#. Translators: button that removes the selected MBROLA voice.
+#: globalPlugins/mbrolaVoiceManager/panel.py:70
+msgid "&Remove voice"
+msgstr "&Supprimer la voix"
+
+#. Translators: title of the file dialog for importing MBROLA voices.
+#: globalPlugins/mbrolaVoiceManager/panel.py:94
+msgid "Choose MBROLA voice files or zip archives (several can be selected)"
+msgstr "Choisissez des fichiers de voix MBROLA ou des archives zip (vous pouvez en sélectionner plusieurs)"
+
+#. Translators: file type shown in the file dialog for importing MBROLA voices.
+#: globalPlugins/mbrolaVoiceManager/panel.py:96
+msgid "MBROLA voices and zip archives"
+msgstr "Voix MBROLA et archives zip"
+
+#. Translators: shown when the web browser could not be opened.
+#: globalPlugins/mbrolaVoiceManager/panel.py:108
+msgid "Could not open the web browser. The address is {url}"
+msgstr "Impossible d'ouvrir le navigateur web. L'adresse est {url}"
+
+#. Translators: title of the folder dialog for importing every MBROLA voice in a folder.
+#: globalPlugins/mbrolaVoiceManager/panel.py:119
+msgid "Choose a folder containing MBROLA voices"
+msgstr "Choisissez un dossier contenant des voix MBROLA"
+
+#. Translators: asks before removing an MBROLA voice; {name} is the voice, e.g. en1.
+#: globalPlugins/mbrolaVoiceManager/panel.py:136
+msgid "Remove the MBROLA voice {name}?"
+msgstr "Supprimer la voix MBROLA {name} ?"
+
+#. Translators: title of the message asking before removing an MBROLA voice.
+#: globalPlugins/mbrolaVoiceManager/panel.py:138
+msgid "Confirm removal"
+msgstr "Confirmer la suppression"
+
+#. Translators: an installed MBROLA voice in the list, e.g. "fr1, 16000 Hz, voices: mb-fr1, mb-fr1-en".
+#: globalPlugins/mbrolaVoiceManager/presenter.py:57
+msgid "{name}, {rate} Hz, voices: {variants}"
+msgstr "{name}, {rate} Hz, voix : {variants}"
+
+#. Translators: shown instead of a list of voices when there are none.
+#: globalPlugins/mbrolaVoiceManager/presenter.py:61
+msgid "none"
+msgstr "aucune"
+
+#. Translators: an imported voice is in use; {error} is the system's error message.
+#: globalPlugins/mbrolaVoiceManager/presenter.py:79
+msgid "{name} will be updated after NVDA restarts the synthesizer ({error})"
+msgstr "{name} sera mise à jour quand NVDA redémarrera le synthétiseur ({error})"
+
+#. Translators: result of an import; {names} is a list such as "en1, fr1".
+#: globalPlugins/mbrolaVoiceManager/presenter.py:85
+msgid "Imported: {names}."
+msgstr "Importées : {names}."
+
+#. Translators: follows a list of import problems, one sentence each.
+#: globalPlugins/mbrolaVoiceManager/presenter.py:88
+msgid "Problems: {details}"
+msgstr "Problèmes : {details}"
+
+#. Translators: result of an import that found no voice.
+#: globalPlugins/mbrolaVoiceManager/presenter.py:91
+msgid "Nothing was imported."
+msgstr "Rien n'a été importé."
+
+#. Translators: a removed voice is still in use by the synthesizer.
+#: globalPlugins/mbrolaVoiceManager/presenter.py:103
+msgid "{name} was removed. Its file is still in use and will be deleted when the synthesizer restarts."
+msgstr "{name} a été supprimée. Son fichier est encore utilisé et sera effacé au redémarrage du synthétiseur."
+
+#. Translators: result of removing an MBROLA voice, e.g. "en1 was removed."
+#: globalPlugins/mbrolaVoiceManager/presenter.py:110
+msgid "{name} was removed."
+msgstr "{name} a été supprimée."
+
+#. Translators: voice list entry for a voice reading another language, e.g. "English, with the French voice fr1 (mb-fr1-en)".
+#: synthDrivers/mbrola_espeak/__init__.py:61
+msgid "{language}, with the {voiceLanguage} voice {database} ({identifier})"
+msgstr "{language}, avec la voix {database} de langue {voiceLanguage} ({identifier})"
+
+#. Translators: name of the synthesizer in NVDA's synthesizer list.
+#: synthDrivers/mbrola_espeak/__init__.py:85
+msgid "eSpeak NG with MBROLA"
+msgstr "eSpeak NG avec MBROLA"
+
+#. Translators: import error for a file that is not an MBROLA voice.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:48
+msgid "This is not an MBROLA voice file (the MBROLA signature is missing)."
+msgstr "Ce n'est pas un fichier de voix MBROLA (la signature MBROLA est absente)."
+
+#. Translators: import error for an incomplete voice file.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:51
+#: synthDrivers/mbrola_espeak/core/voice_file.py:64
+msgid "The MBROLA voice file is truncated."
+msgstr "Le fichier de voix MBROLA est tronqué."
+
+#. Translators: import error for a damaged voice file.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:55
+msgid "The MBROLA voice file has an unreadable format version."
+msgstr "Le fichier de voix MBROLA a une version de format illisible."
+
+#. Translators: import error for an empty voice file. Diphones are the sound units of a voice.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:68
+msgid "The MBROLA voice file contains no diphones."
+msgstr "Le fichier de voix MBROLA ne contient aucun diphone."
+
+#. Translators: import error; {rate} is a number of samples per second.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:72
+msgid "The MBROLA voice file has an implausible sample rate ({rate} Hz)."
+msgstr "Le fichier de voix MBROLA a une fréquence d'échantillonnage invraisemblable ({rate} Hz)."
+
+#. Translators: {file} is a file name, {reason} the system's error message.
+#: synthDrivers/mbrola_espeak/core/voice_file.py:89
+msgid "Could not read {file}: {reason}"
+msgstr "Impossible de lire {file} : {reason}"
+
+#. Translators: {name} is what the user asked to remove.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:114
+msgid "{name} is not an MBROLA voice name."
+msgstr "{name} n'est pas un nom de voix MBROLA."
+
+#. Translators: {name} is a voice name such as en1.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:123
+msgid "eSpeak NG has no MBROLA voice named {name}."
+msgstr "eSpeak NG ne connaît aucune voix MBROLA nommée {name}."
+
+#. Translators: {file} is the name of the file the user picked. en1 and de6 are voice names; keep them.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:129
+msgid "Cannot tell which MBROLA voice {file} is. Keep the original file name, for example en1 or de6."
+msgstr "Impossible de savoir quelle voix MBROLA est {file}. Gardez le nom de fichier d'origine, par exemple en1 ou de6."
+
+#. Translators: {file} is a file name, {reason} the system's error message.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:143
+msgid "Could not copy {file}: {reason}"
+msgstr "Impossible de copier {file} : {reason}"
+
+#. Translators: {file} is a zip file name, {reason} the error.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:160
+msgid "Could not read the archive {file}: {reason}"
+msgstr "Impossible de lire l'archive {file} : {reason}"
+
+#. Translators: {file} is a zip file name.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:167
+msgid "{file} does not contain any MBROLA voice that eSpeak NG can use."
+msgstr "{file} ne contient aucune voix MBROLA utilisable par eSpeak NG."
+
+#. Translators: {folder} is the folder the user picked.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:202
+msgid "No MBROLA voices that eSpeak NG can use were found in {folder}."
+msgstr "Aucune voix MBROLA utilisable par eSpeak NG n'a été trouvée dans {folder}."
+
+#. Translators: {name} is a voice name such as en1, found in a zip file.
+#: synthDrivers/mbrola_espeak/core/voice_store.py:252
+msgid "{name} is larger than expected; refusing to import it."
+msgstr "{name} est plus gros que prévu ; importation refusée."
+

@@ -279,6 +279,26 @@ def test_presenter_nothing_imported_is_an_error(presenter):
 	assert "not an MBROLA voice" in outcome.message
 
 
+def test_presenter_speaks_french_including_core_errors(presenter):
+	import gettext
+	import io
+
+	import i18n
+
+	p, tmp = presenter
+	po = i18n.po_files()["fr"]
+	p._ = gettext.GNUTranslations(io.BytesIO(i18n.compile_po_file(po))).gettext
+	(tmp / "en1").write_bytes(make_voice_bytes(rate=16000))
+	(tmp / "junk").write_bytes(b"nope")
+	outcome = p.import_files([tmp / "junk", tmp / "en1"])
+	assert outcome.message == (
+		"Importées : en1. Problèmes : junk: Impossible de savoir quelle voix MBROLA est junk. "
+		"Gardez le nom de fichier d'origine, par exemple en1 ou de6."
+	)
+	assert p.entries()[0].label == "en1, 16000 Hz, voix : mb-en1"
+	assert p.remove("zz9").message == "zz9 n'est pas un nom de voix MBROLA."
+
+
 def test_global_plugin_registers_and_unregisters_panel(nvda):
 	plugin_mod = importlib.import_module("globalPlugins.mbrolaVoiceManager")
 	nvda.NVDASettingsDialog.categoryClasses.clear()

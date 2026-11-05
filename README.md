@@ -48,6 +48,28 @@ the only place eSpeak NG looks on Windows.
 
 More detail: `docs/ARCHITECTURE.md`. Building: `docs/BUILDING.md`.
 
+## Translations
+
+The add-on is available in English and French. NVDA picks the language of
+its own interface.
+
+- Messages: `addon/locale/<lang>/LC_MESSAGES/nvda.po`. Only the `.po` is kept
+  in the repository; `tools/build_addon.py` compiles it to the `nvda.mo` that
+  NVDA loads.
+- Add-on summary and description: `addon/locale/<lang>/manifest.ini`.
+- User guide: `addon/doc/<lang>/readme.html`.
+
+`tools/i18n.py` needs nothing but Python:
+
+    python tools/i18n.py update fr    # add new messages to the French file, drop removed ones
+    python tools/i18n.py check        # untranslated, fuzzy or broken entries
+    python tools/i18n.py pot          # template for a new language
+
+Every message needs a `# Translators:` comment, and a translation must keep
+the same `{placeholders}` and one `&` for a keyboard shortcut. The tests
+check all of this, and the build refuses a translation with wrong
+placeholders.
+
 ## Getting voices
 
 Download a voice from https://github.com/numediart/MBROLA-voices (each voice
@@ -112,4 +134,3 @@ Not yet verified:
   separately; that is planned.
 - No "rate boost" yet (NVDA's built-in eSpeak uses the sonic library for it).
 - No variants (the "!v" voice variants) yet.
-- Messages in the add-on are ready for translation, but there are no translations yet.

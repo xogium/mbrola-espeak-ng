@@ -8,7 +8,9 @@ An NVDA add-on is a zip file with ``manifest.ini`` at its root. This script:
   --target windows`` are present and x64 (``--allow-missing-native`` skips this,
   for testing packaging only);
 * leaves out caches, any MBROLA voice that may have ended up in
-  ``espeak-ng-data/mbrola``, and Linux-only harness files.
+  ``espeak-ng-data/mbrola``, and Linux-only harness files;
+* compiles each ``locale/<lang>/LC_MESSAGES/nvda.po`` into the ``nvda.mo``
+  NVDA loads (see ``tools/i18n.py``), and ships only the ``.mo``.
 
 Usage: python tools/build_addon.py [--output-dir dist] [--allow-missing-native]
 """
@@ -22,6 +24,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 import check_pe_arch
+import i18n
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ADDON_DIR = REPO_ROOT / "addon"
@@ -49,6 +52,8 @@ def should_include(rel: PurePosixPath) -> bool:
 		return False
 	if rel.suffix == ".so":
 		return False  # Linux test-harness libraries
+	if rel.suffix in {".po", ".pot"}:
+		return False  # translation sources; compiled_translations() adds the .mo files
 	excluded_dirs = (
 		DRIVER_REL / "espeak-ng-data" / "mbrola",  # never ship MBROLA voices
 		DRIVER_REL / "espeak-ng-data" / "voices" / "!v",  # eSpeak NG variants (Alex, Michael, ...): unused
@@ -71,6 +76,15 @@ def collect_files(addon_dir: Path) -> list[tuple[Path, PurePosixPath]]:
 	return files
 
 
+def compiled_translations(addon_dir: Path) -> list[tuple[PurePosixPath, bytes]]:
+	"""``(path in the package, .mo bytes)`` for every translation. Raises :class:`i18n.I18nError` if one is broken."""
+	compiled = []
+	for po in i18n.po_files(addon_dir).values():
+		rel = PurePosixPath(po.relative_to(addon_dir).as_posix()).with_suffix(".mo")
+		compiled.append((rel, i18n.compile_po_file(po)))
+	return compiled
+
+
 def check_native(addon_dir: Path) -> list[str]:
 	errors = [f"missing {rel}" for rel in REQUIRED_NATIVE if not (addon_dir / rel).is_file()]
 	dlls = [addon_dir / rel for rel in REQUIRED_NATIVE if rel.suffix == ".dll" and (addon_dir / rel).is_file()]
@@ -87,11 +101,17 @@ def build(addon_dir: Path, output_dir: Path, allow_missing_native: bool = False)
 				"Native files are missing or wrong; run tools/build_native.py --target windows first:\n  "
 				+ "\n  ".join(errors),
 			)
+	try:
+		translations = compiled_translations(addon_dir)
+	except i18n.I18nError as e:
+		raise SystemExit(f"A translation is broken; fix it or run tools/i18n.py check:\n{e}") from e
 	output_dir.mkdir(parents=True, exist_ok=True)
 	target = output_dir / f"{manifest['name']}-{manifest['version']}.nvda-addon"
 	with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED) as z:
 		for path, rel in collect_files(addon_dir):
 			z.write(path, str(rel))
+		for rel, data in translations:
+			z.writestr(str(rel), data)
 	return target
 
 

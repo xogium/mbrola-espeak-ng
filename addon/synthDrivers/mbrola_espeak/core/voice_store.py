@@ -27,7 +27,7 @@ from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
-from .errors import InvalidVoiceFileError, NoVoicesFoundError, UnknownVoiceNameError, VoiceArchiveError
+from .errors import N_, InvalidVoiceFileError, NoVoicesFoundError, UnknownVoiceNameError, VoiceArchiveError
 from .voice_file import HEADER_PROBE_SIZE, MbrolaVoiceHeader, parse_header, read_header_from_path
 
 _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
@@ -110,7 +110,8 @@ class VoiceStore:
 
 	def remove(self, name: str) -> None:
 		if name not in self._known:
-			raise UnknownVoiceNameError(f"{name} is not an MBROLA voice name.")
+			# Translators: {name} is what the user asked to remove.
+			raise UnknownVoiceNameError(N_("{name} is not an MBROLA voice name."), name=name)
 		path = self._root / name
 		if path.exists():
 			path.unlink()
@@ -118,13 +119,15 @@ class VoiceStore:
 	def _resolve_name(self, file_name: str, override: str | None) -> str:
 		if override is not None:
 			if override not in self._known or not _SAFE_NAME_RE.match(override):
-				raise UnknownVoiceNameError(f"eSpeak NG has no MBROLA voice named {override}.")
+				# Translators: {name} is a voice name such as en1.
+				raise UnknownVoiceNameError(N_("eSpeak NG has no MBROLA voice named {name}."), name=override)
 			return override
 		resolved = resolve_database_name(file_name, self._known)
 		if resolved is None:
 			raise UnknownVoiceNameError(
-				f"Cannot tell which MBROLA voice {file_name} is. "
-				"Keep the original file name, for example en1 or de6.",
+				# Translators: {file} is the name of the file the user picked. en1 and de6 are voice names; keep them.
+				N_("Cannot tell which MBROLA voice {file} is. Keep the original file name, for example en1 or de6."),
+				file=file_name,
 			)
 		return resolved
 
@@ -135,7 +138,12 @@ class VoiceStore:
 			with open(source, "rb") as f:
 				dest = self._write_atomically(voice_name, f, limit=None)
 		except OSError as e:
-			raise InvalidVoiceFileError(f"Could not copy {source.name}: {e.strerror or e}") from e
+			raise InvalidVoiceFileError(
+				# Translators: {file} is a file name, {reason} the system's error message.
+				N_("Could not copy {file}: {reason}"),
+				file=source.name,
+				reason=e.strerror or str(e),
+			) from e
 		return InstalledVoice(name=voice_name, path=dest, header=header)
 
 	def _import_zip(self, source: Path) -> list[InstalledVoice]:
@@ -147,9 +155,18 @@ class VoiceStore:
 					if voice is not None:
 						imported.append(voice)
 		except (zipfile.BadZipFile, OSError) as e:
-			raise VoiceArchiveError(f"Could not read the archive {source.name}: {e}") from e
+			raise VoiceArchiveError(
+				# Translators: {file} is a zip file name, {reason} the error.
+				N_("Could not read the archive {file}: {reason}"),
+				file=source.name,
+				reason=str(e),
+			) from e
 		if not imported:
-			raise VoiceArchiveError(f"{source.name} does not contain any MBROLA voice that eSpeak NG can use.")
+			raise VoiceArchiveError(
+				# Translators: {file} is a zip file name.
+				N_("{file} does not contain any MBROLA voice that eSpeak NG can use."),
+				file=source.name,
+			)
 		return imported
 
 	def _import_directory(self, folder: Path) -> list[InstalledVoice]:
@@ -180,7 +197,11 @@ class VoiceStore:
 			if scanned > MAX_SCANNED_FILES:
 				break
 		if not imported:
-			raise NoVoicesFoundError(f"No MBROLA voices that eSpeak NG can use were found in {folder}.")
+			raise NoVoicesFoundError(
+				# Translators: {folder} is the folder the user picked.
+				N_("No MBROLA voices that eSpeak NG can use were found in {folder}."),
+				folder=str(folder),
+			)
 		return [imported[name] for name in sorted(imported)]
 
 	def _try_import_candidate(self, path: Path) -> list[InstalledVoice]:
@@ -226,7 +247,11 @@ class VoiceStore:
 				while chunk := stream.read(_COPY_CHUNK):
 					written += len(chunk)
 					if limit is not None and written > limit:
-						raise VoiceArchiveError(f"{voice_name} is larger than expected; refusing to import it.")
+						raise VoiceArchiveError(
+							# Translators: {name} is a voice name such as en1, found in a zip file.
+							N_("{name} is larger than expected; refusing to import it."),
+							name=voice_name,
+						)
 					out.write(chunk)
 			os.replace(tmp, dest)
 		except BaseException:

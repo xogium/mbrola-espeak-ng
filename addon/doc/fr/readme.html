@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>eSpeak NG avec les voix MBROLA</title>
+</head>
+<body>
+<main>
+<h1>eSpeak NG avec les voix MBROLA</h1>
+
+<p>Cette extension ajoute un synthétiseur appelé « eSpeak NG avec MBROLA ». Il
+parle avec des voix à diphones MBROLA, et eSpeak NG applique les règles de
+lecture. Il nécessite NVDA 2026.1 ou ultérieur (64 bits).</p>
+
+<h2>Obtenir une voix</h2>
+<p>Les voix ne sont pas incluses, car chacune a sa propre licence. La plupart
+sont gratuites pour un usage non commercial.</p>
+<ol>
+<li>Ouvrez le menu NVDA, Préférences, Paramètres, et choisissez la catégorie « Voix MBROLA ».</li>
+<li>Appuyez sur « Obtenir des voix en ligne... » pour ouvrir la
+<a href="https://github.com/numediart/MBROLA-voices/tree/master/data">page de téléchargement des voix MBROLA</a>.
+Chaque voix y a son propre dossier, par exemple fr1 pour le français ; téléchargez le fichier de voix qu'il contient.
+La première fois que NVDA démarre avec cette extension et sans voix, il propose d'ouvrir cette page pour vous.</li>
+<li>Appuyez sur « Importer des fichiers... » et choisissez des fichiers de voix ou des fichiers zip. Vous pouvez en
+sélectionner plusieurs à la fois. Ou appuyez sur « Importer un dossier... » et choisissez un dossier : toutes les voix
+qu'il contient, sous-dossiers compris, sont importées. C'est la façon la plus simple d'importer une copie téléchargée de
+toute la collection MBROLA-voices.</li>
+<li>Ouvrez la catégorie Parole, changez le synthétiseur pour « eSpeak NG avec MBROLA »,
+et choisissez une voix.</li>
+</ol>
+<p>Gardez le nom d'origine du fichier, par exemple fr1 ou de6. C'est grâce à ce nom
+qu'eSpeak NG sait de quelle voix il s'agit.</p>
+
+<h2>Pourquoi certaines voix apparaissent deux fois, dans deux langues</h2>
+<p>eSpeak NG propose certaines voix dans une deuxième langue. Par exemple, en plus de
+« Français (France), MBROLA fr1 », il existe « Anglais, avec la voix fr1 de langue Français (France) » :
+du texte anglais, lu avec les règles de prononciation anglaises mais par la voix française fr1.
+C'est aussi le cas pour fr4, plusieurs voix allemandes et d'autres. Les deux entrées utilisent le
+même fichier de voix ; choisissez celle que vous préférez.</p>
+
+<h2>Où les voix sont conservées</h2>
+<p>Les voix importées sont conservées dans le dossier mbrolaVoices de votre dossier de
+configuration de NVDA, si bien que la mise à jour de l'extension ne les supprime pas. Pour
+supprimer une voix, sélectionnez-la dans la catégorie « Voix MBROLA » et appuyez sur « Supprimer la voix ».</p>
+
+<h2>Limitations connues</h2>
+<ul>
+<li>Le changement automatique de langue n'est pas encore disponible avec ce synthétiseur.</li>
+<li>Il n'y a pas encore d'accélération du débit.</li>
+</ul>
+
+<h2>Licences</h2>
+<p>L'extension est sous licence GPL-3.0-or-later. Elle inclut eSpeak NG (GPL-3.0-or-later)
+et le moteur MBROLA (AGPL-3.0-or-later). Le code source et les instructions de compilation
+se trouvent dans le dépôt du projet.</p>
+</main>
+</body>
+</html>

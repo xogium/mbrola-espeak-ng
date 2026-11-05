@@ -76,6 +76,10 @@ def fetch_source(pin: SourcePin, dest: Path) -> Path:
 	if not (dest / ".git").exists():
 		dest.mkdir(parents=True, exist_ok=True)
 		run(["git", "init", "-q"], cwd=dest)
+		# Keep upstream files byte-for-byte (LF). Windows CI machines default to
+		# core.autocrlf=true, which turns checkouts into CRLF and makes our LF
+		# patches fail to apply.
+		run(["git", "config", "core.autocrlf", "false"], cwd=dest)
 		run(["git", "remote", "add", "origin", pin.repo], cwd=dest)
 	run(["git", "fetch", "-q", "--depth", "1", "origin", pin.commit], cwd=dest)
 	run(["git", "checkout", "-q", "--force", pin.commit], cwd=dest)

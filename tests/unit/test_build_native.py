@@ -116,3 +116,23 @@ def test_harness_wrapper_replaces_mbrowrap(tmp_path):
 	(target / "mbrowrap.c").write_text("upstream")
 	build_native.install_linux_harness_wrapper(tmp_path)
 	assert "dlopen" in (target / "mbrowrap.c").read_text()
+
+
+def test_fetch_disables_crlf_conversion(tmp_path, monkeypatch):
+	"""Regression: on Windows CI, core.autocrlf=true made upstream sources CRLF and our patches failed."""
+	calls = []
+	monkeypatch.setattr(build_native, "run", lambda cmd, cwd=None: calls.append(cmd))
+	pin = build_native.SourcePin("x", "https://example.invalid/x.git", "main", "a" * 40)
+	monkeypatch.setattr(build_native, "git_output", lambda args, cwd: pin.commit)
+	build_native.fetch_source(pin, tmp_path / "x")
+	assert ["git", "config", "core.autocrlf", "false"] in calls
+	assert calls.index(["git", "config", "core.autocrlf", "false"]) < next(
+		i for i, c in enumerate(calls) if c[:2] == ["git", "checkout"]
+	)
+
+
+def test_patches_are_kept_byte_exact_by_gitattributes():
+	attributes = (build_native.REPO_ROOT / ".gitattributes").read_text()
+	assert "*.patch -text" in attributes
+	for patch in (build_native.NATIVE_DIR / "patches").rglob("*.patch"):
+		assert b"\r\n" not in patch.read_bytes(), patch.name

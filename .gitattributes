@@ -1,0 +1,5 @@
+# Keep native files LF on every platform. Windows checkouts default to CRLF,
+# which makes `git apply` fail on our patches.
+native/** text eol=lf
+# Patches must stay byte-exact; this rule comes last so it wins.
+*.patch -text

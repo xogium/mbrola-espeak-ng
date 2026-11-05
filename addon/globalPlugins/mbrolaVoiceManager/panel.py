@@ -8,7 +8,7 @@ import addonHandler
 import gui
 import synthDriverHandler
 import wx
-from gui import guiHelper
+from gui import guiHelper, settingsDialogs
 from gui.settingsDialogs import SettingsPanel
 from logHandler import log
 
@@ -36,32 +36,41 @@ def _reload_synth_if_active() -> None:
 		synthDriverHandler.setSynth(DRIVER_NAME)
 
 
+# NVDA's own width for panel descriptions; fall back if a future NVDA renames it.
+_DESCRIPTION_WIDTH = getattr(settingsDialogs, "PANEL_DESCRIPTION_WIDTH", 544)
+
+
 class MbrolaVoicesPanel(SettingsPanel):
 	# Translators: title of the settings category for managing MBROLA voices.
 	title = _("MBROLA voices")
+	# Shown at the top of the panel and also exposed as the panel's accessible
+	# description, the same way NVDA's built-in panels do it. A bare static text
+	# with no description gave a speech/braille mismatch ("unknown" in braille).
+	# Translators: instructions at the top of the MBROLA voices settings category.
+	panelDescription = _(
+		"MBROLA voices are not included with this add-on because each has its own licence. "
+		"Download voices from {url}. Then import a voice file (for example en1), a zip file, "
+		"or a whole folder: every voice found in the folder and its subfolders is imported. "
+		"Keep the original file names.",
+	).format(url=VOICES_URL)
 
 	def makeSettings(self, settingsSizer):
 		self._presenter = _make_presenter()
 		helper = guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-		helper.addItem(
-			wx.StaticText(
-				self,
-				label=_(
-					"MBROLA voices are not included with this add-on because each has its own licence. "
-					"Download a voice from {url}, then import the voice file (for example en1) "
-					"or a zip file that contains it. Keep the original file name.",
-				).format(url=VOICES_URL),
-			),
-		)
+		description = helper.addItem(wx.StaticText(self, label=self.panelDescription))
+		description.Wrap(self.scaleSize(_DESCRIPTION_WIDTH))
 		# Translators: label of the list of installed MBROLA voices.
 		self._list = helper.addLabeledControl(_("Installed &voices:"), wx.ListBox, choices=[])
 		buttons = guiHelper.ButtonHelper(wx.HORIZONTAL)
-		# Translators: button that opens a file dialog to import MBROLA voices.
-		self._import_button = buttons.addButton(self, label=_("&Import voice..."))
+		# Translators: button that opens a file dialog to import MBROLA voice files or zips.
+		self._import_button = buttons.addButton(self, label=_("&Import files..."))
+		# Translators: button that imports every MBROLA voice found in a folder.
+		self._import_folder_button = buttons.addButton(self, label=_("Import &folder..."))
 		# Translators: button that removes the selected MBROLA voice.
 		self._remove_button = buttons.addButton(self, label=_("&Remove voice"))
 		helper.addItem(buttons)
 		self._import_button.Bind(wx.EVT_BUTTON, self._on_import)
+		self._import_folder_button.Bind(wx.EVT_BUTTON, self._on_import_folder)
 		self._remove_button.Bind(wx.EVT_BUTTON, self._on_remove)
 		self._list.Bind(wx.EVT_LISTBOX, lambda evt: self._update_buttons())
 		self._refresh()
@@ -81,7 +90,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 		with wx.FileDialog(
 			self,
 			# Translators: title of the file dialog for importing MBROLA voices.
-			message=_("Choose MBROLA voice files or zip archives"),
+			message=_("Choose MBROLA voice files or zip archives (several can be selected)"),
 			wildcard=_("MBROLA voices and zip archives") + " (*.*)|*.*",
 			style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE,
 		) as dialog:
@@ -89,6 +98,20 @@ class MbrolaVoicesPanel(SettingsPanel):
 				return
 			paths = [Path(p) for p in dialog.GetPaths()]
 		self._show(self._presenter.import_files(paths))
+
+	def _on_import_folder(self, evt) -> None:
+		with wx.DirDialog(
+			self,
+			# Translators: title of the folder dialog for importing every MBROLA voice in a folder.
+			message=_("Choose a folder containing MBROLA voices"),
+			style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST,
+		) as dialog:
+			if dialog.ShowModal() != wx.ID_OK:
+				return
+			folder = Path(dialog.GetPath())
+		with wx.BusyCursor():
+			outcome = self._presenter.import_files([folder])
+		self._show(outcome)
 
 	def _on_remove(self, evt) -> None:
 		index = self._list.GetSelection()

@@ -157,3 +157,87 @@ def test_remove(store, tmp_path):
 	store.remove("en1")  # removing twice is fine
 	with pytest.raises(UnknownVoiceNameError):
 		store.remove("../escape")
+
+
+# --- folder import -------------------------------------------------------------
+
+
+def make_voices_repo(root):
+	"""Same layout as github.com/numediart/MBROLA-voices."""
+	for name in ("en1", "us1"):
+		d = root / "MBROLA-voices" / "data" / name
+		(d / "TEST").mkdir(parents=True)
+		(d / name).write_bytes(make_voice_bytes())
+		(d / "README.txt").write_text("readme")
+		(d / "TEST" / "test.pho").write_text("_ 100")
+	bad = root / "MBROLA-voices" / "data" / "fr1"
+	bad.mkdir()
+	(bad / "fr1").write_bytes(b"truncated download")
+	unknown = root / "MBROLA-voices" / "data" / "xx9"
+	unknown.mkdir()
+	(unknown / "xx9").write_bytes(make_voice_bytes())
+	return root / "MBROLA-voices"
+
+
+def test_import_folder_finds_voices_in_subfolders(store, tmp_path):
+	repo = make_voices_repo(tmp_path)
+	imported = store.import_path(repo)
+	assert [v.name for v in imported] == ["en1", "us1"]
+	assert sorted(p.name for p in store.root.iterdir()) == ["en1", "us1"]
+	assert leftovers(store) == []
+
+
+def test_import_folder_also_opens_zips(store, tmp_path):
+	folder = tmp_path / "downloads"
+	folder.mkdir()
+	make_zip(folder / "de6.zip", {"de6/de6": make_voice_bytes()})
+	(folder / "en1").write_bytes(make_voice_bytes())
+	(folder / "broken.zip").write_bytes(b"not a zip")
+	assert [v.name for v in store.import_path(folder)] == ["de6", "en1"]
+
+
+def test_import_folder_without_voices(store, tmp_path):
+	from core.errors import NoVoicesFoundError
+
+	folder = tmp_path / "empty"
+	folder.mkdir()
+	(folder / "notes.txt").write_text("x")
+	with pytest.raises(NoVoicesFoundError, match="No MBROLA voices"):
+		store.import_path(folder)
+
+
+def test_import_folder_does_not_follow_symlinks(store, tmp_path):
+	outside = tmp_path / "outside"
+	outside.mkdir()
+	(outside / "en1").write_bytes(make_voice_bytes())
+	folder = tmp_path / "picked"
+	folder.mkdir()
+	(folder / "us1").write_bytes(make_voice_bytes())
+	try:
+		(folder / "link").symlink_to(outside, target_is_directory=True)
+		(folder / "de6").symlink_to(outside / "en1")
+	except OSError:
+		pytest.skip("symlinks not permitted here")
+	assert [v.name for v in store.import_path(folder)] == ["us1"]
+
+
+def test_import_folder_skips_the_store_itself(store, tmp_path):
+	(tmp_path / "en1").write_bytes(make_voice_bytes())
+	store.import_path(tmp_path / "en1")
+	# Picking a parent of the store must not re-import the store's own files.
+	(tmp_path / "us1").write_bytes(make_voice_bytes())
+	assert [v.name for v in store.import_path(tmp_path)] == ["en1", "us1"]
+	assert leftovers(store) == []
+
+
+def test_import_folder_scan_limit(store, tmp_path, monkeypatch):
+	monkeypatch.setattr(voice_store, "MAX_SCANNED_FILES", 3)
+	folder = tmp_path / "big"
+	folder.mkdir()
+	for i in range(5):
+		(folder / f"a{i}.txt").write_text("x")
+	(folder / "z_en1").write_bytes(make_voice_bytes())
+	from core.errors import NoVoicesFoundError
+
+	with pytest.raises(NoVoicesFoundError):
+		store.import_path(folder)

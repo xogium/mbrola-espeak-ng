@@ -235,3 +235,49 @@ def test_engine_cancel_with_real_library(engine_harness):
 	engine.speak(build_ssml([Text("Back again.")])).result(30)
 	assert done.is_set()
 	assert errors == []
+
+
+_LEAK_PROBE = r"""
+import ctypes, os, resource, sys
+lib = ctypes.CDLL(sys.argv[1])
+lib.init_MBR.argtypes = [ctypes.c_char_p]
+voice = sys.argv[2].encode()
+def fds():
+    n = 0
+    for fd in range(4096):
+        try:
+            os.fstat(fd); n += 1
+        except OSError:
+            pass
+    return n
+assert lib.init_MBR(voice) == 0
+rss0, fds0 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, fds()
+for _ in range(50):
+    assert lib.init_MBR(voice) == 0
+lib.close_MBR(); lib.close_MBR()  # closing twice must be safe
+rss1, fds1 = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss, fds()
+print(rss1 - rss0, fds1 - fds0)
+"""
+
+
+@pytest.mark.skipif(os.name != "posix", reason="uses resource and POSIX file descriptors")
+def test_voice_reload_leaks_neither_memory_nor_file_handles(layout, library):
+	"""Regression test for native/patches/mbrola/0002.
+
+	Unpatched MBROLA keeps every previously loaded voice: about 80 KB and one
+	open file handle per voice switch (the handle also locks the voice file on
+	Windows, so it could not be removed or updated).
+	"""
+	import subprocess
+	import sys
+
+	voice = layout.espeak_mbrola_dir / "en1"
+	result = subprocess.run(
+		[sys.executable, "-I", "-c", _LEAK_PROBE, str(layout.mbrola_library), str(voice)],
+		capture_output=True,
+		text=True,
+		check=True,
+	)
+	rss_growth_kb, fd_growth = (int(x) for x in result.stdout.split())
+	assert fd_growth <= 0, f"{fd_growth} file handles leaked over 50 voice loads"
+	assert rss_growth_kb < 1024, f"memory grew by {rss_growth_kb} KB over 50 voice loads"

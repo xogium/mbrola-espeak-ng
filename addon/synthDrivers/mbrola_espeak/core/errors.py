@@ -21,5 +21,9 @@ class VoiceArchiveError(MbrolaEspeakError):
 	"""A zip archive could not be imported."""
 
 
+class NoVoicesFoundError(MbrolaEspeakError):
+	"""A folder was searched but contained no usable MBROLA voice."""
+
+
 class NativeLibraryError(MbrolaEspeakError):
 	"""A native library (eSpeak NG or MBROLA) failed to load or returned an error."""

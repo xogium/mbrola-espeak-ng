@@ -5,9 +5,12 @@ one file per database, named exactly as eSpeak NG expects (``en1``,
 ``us1``, ...). It lives outside the add-on folder so add-on updates do not
 delete the voices.
 
-Importing accepts either a database file or a ``.zip`` archive containing one
-or more databases (for example a voice downloaded from
-https://github.com/numediart/MBROLA-voices). Every candidate is checked with
+Importing accepts a database file, a ``.zip`` archive containing one or
+more databases, or a folder, which is searched (including subfolders) for
+both. A folder is the easy way to import many voices at once: in the
+https://github.com/numediart/MBROLA-voices collection every voice sits in
+its own subfolder (``data/en1/en1``, ``data/us1/us1``, ...), so a file dialog
+cannot select them together. Every candidate is checked with
 :func:`voice_file.parse_header` before anything is written. Files are written
 to a temporary name and then renamed, so a failed import never leaves a
 half-written voice behind.
@@ -24,13 +27,15 @@ from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
-from .errors import InvalidVoiceFileError, UnknownVoiceNameError, VoiceArchiveError
+from .errors import InvalidVoiceFileError, NoVoicesFoundError, UnknownVoiceNameError, VoiceArchiveError
 from .voice_file import HEADER_PROBE_SIZE, MbrolaVoiceHeader, parse_header, read_header_from_path
 
 _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
 # Largest real MBROLA databases are around 30 MB. Anything far bigger inside a zip is refused
 # so that a malformed or malicious archive cannot fill the disk.
 MAX_VOICE_BYTES = 256 * 1024 * 1024
+# A folder scan stops after this many files, so picking C:\ by mistake ends quickly.
+MAX_SCANNED_FILES = 50_000
 _COPY_CHUNK = 1024 * 1024
 
 
@@ -93,10 +98,12 @@ class VoiceStore:
 		"""Import a voice file or a zip of voice files. Returns what was installed.
 
 		:param name: Database name to use for a single file whose file name is not
-			recognisable (ignored for zip archives).
-		:raises InvalidVoiceFileError, UnknownVoiceNameError, VoiceArchiveError:
+			recognisable (ignored for zip archives and folders).
+		:raises InvalidVoiceFileError, UnknownVoiceNameError, VoiceArchiveError, NoVoicesFoundError:
 		"""
 		source = Path(source)
+		if source.is_dir():
+			return self._import_directory(source)
 		if zipfile.is_zipfile(source):
 			return self._import_zip(source)
 		return [self._import_file(source, name)]
@@ -144,6 +151,53 @@ class VoiceStore:
 		if not imported:
 			raise VoiceArchiveError(f"{source.name} does not contain any MBROLA voice that eSpeak NG can use.")
 		return imported
+
+	def _import_directory(self, folder: Path) -> list[InstalledVoice]:
+		"""Import every voice file and voice zip found under ``folder``.
+
+		Files that are not voices are skipped silently (READMEs, licences, test
+		files). Symbolic links and junctions are not followed, and the voice store
+		itself is never scanned.
+		"""
+		imported: dict[str, InstalledVoice] = {}
+		scanned = 0
+		store = self._root.resolve() if self._root.exists() else None
+		for dirpath, dirnames, filenames in os.walk(folder, followlinks=False):
+			here = Path(dirpath)
+			if store is not None and here.resolve() == store:
+				dirnames[:] = []
+				continue
+			dirnames.sort()
+			for file_name in sorted(filenames):
+				scanned += 1
+				if scanned > MAX_SCANNED_FILES:
+					break
+				path = here / file_name
+				if path.is_symlink() or not path.is_file():
+					continue
+				for voice in self._try_import_candidate(path):
+					imported[voice.name] = voice
+			if scanned > MAX_SCANNED_FILES:
+				break
+		if not imported:
+			raise NoVoicesFoundError(f"No MBROLA voices that eSpeak NG can use were found in {folder}.")
+		return [imported[name] for name in sorted(imported)]
+
+	def _try_import_candidate(self, path: Path) -> list[InstalledVoice]:
+		"""Import ``path`` if it is a voice or a zip with voices; otherwise return nothing."""
+		if path.suffix.lower() == ".zip":
+			try:
+				return self._import_zip(path)
+			except VoiceArchiveError:
+				return []
+		if resolve_database_name(path.name, self._known) is None:
+			return []
+		try:
+			if path.stat().st_size > MAX_VOICE_BYTES:
+				return []
+			return [self._import_file(path, None)]
+		except (InvalidVoiceFileError, OSError):
+			return []
 
 	def _import_zip_member(self, archive: zipfile.ZipFile, info: zipfile.ZipInfo) -> InstalledVoice | None:
 		if info.is_dir() or info.file_size > MAX_VOICE_BYTES:

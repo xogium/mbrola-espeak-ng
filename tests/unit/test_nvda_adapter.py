@@ -287,3 +287,29 @@ def test_global_plugin_registers_and_unregisters_panel(nvda):
 	plugin.terminate()
 	plugin.terminate()
 	assert nvda.NVDASettingsDialog.categoryClasses == []
+
+
+def test_presenter_imports_a_whole_folder(presenter):
+	p, tmp = presenter
+	folder = tmp / "voices"
+	for name in ("en1", "br1"):
+		(folder / "data" / name).mkdir(parents=True)
+		(folder / "data" / name / name).write_bytes(make_voice_bytes())
+	outcome = p.import_files([folder])
+	assert outcome.message == "Imported: br1, en1."
+	assert [e.name for e in p.entries()] == ["br1", "en1"]
+
+
+def test_presenter_reports_folder_without_voices(presenter):
+	p, tmp = presenter
+	(tmp / "nothing").mkdir()
+	outcome = p.import_files([tmp / "nothing"])
+	assert outcome.is_error and "No MBROLA voices" in outcome.message
+
+
+def test_panel_instructions_are_the_accessible_description(nvda):
+	"""The instructions must be the panel's description (spoken and brailled by NVDA), not just loose text."""
+	panel_mod = importlib.import_module("globalPlugins.mbrolaVoiceManager.panel")
+	description = panel_mod.MbrolaVoicesPanel.panelDescription
+	assert "github.com/numediart/MBROLA-voices" in description
+	assert "folder" in description

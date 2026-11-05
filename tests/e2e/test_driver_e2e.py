@@ -125,3 +125,24 @@ def test_driver_full_cycle(driver):
 		assert wait_for(lambda: any(c.get("index") == 1 for c in state.synthIndexReached.calls))
 	finally:
 		again.terminate()
+
+
+def test_real_driver_is_freed_when_nvda_switches_synth(driver):
+	"""NVDA's Voice panel refreshes only when the old synth object dies (see test_nvda_adapter)."""
+	import gc
+	import weakref
+
+	module, state, sinks, layout = driver
+	commands = importlib.import_module("speech.commands")
+	gc.collect()
+	gc.disable()
+	try:
+		synth = module.SynthDriver()
+		synth.speak(["Hello", commands.IndexCommand(1)])
+		assert wait_for(lambda: state.synthDoneSpeaking.calls)
+		ref = weakref.ref(synth)
+		synth.terminate()
+		del synth
+		assert ref() is None
+	finally:
+		gc.enable()

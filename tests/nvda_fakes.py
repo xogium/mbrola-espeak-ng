@@ -11,6 +11,7 @@ from __future__ import annotations
 import builtins
 import sys
 import types
+import weakref
 from pathlib import Path
 
 ADDON_DIR = Path(__file__).resolve().parent.parent / "addon"
@@ -21,6 +22,9 @@ class _Action:
 		self.calls = []
 
 	def notify(self, **kwargs):
+		# Like NVDA's extensionPoints.Action, never keep the synth alive: store it weakly.
+		if "synth" in kwargs:
+			kwargs = dict(kwargs, synth=weakref.ref(kwargs["synth"]))
 		self.calls.append(kwargs)
 
 

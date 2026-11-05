@@ -121,7 +121,7 @@ def test_speak_produces_index_and_done_notifications(driver_module, nvda):
 		synth.speak(["Hello", commands.IndexCommand(1), " world", commands.IndexCommand(2)])
 		assert wait_for(lambda: nvda.synthDoneSpeaking.calls)
 		assert [c["index"] for c in nvda.synthIndexReached.calls] == [1, 2]
-		assert all(c["synth"] is synth for c in nvda.synthIndexReached.calls)
+		assert all(c["synth"]() is synth for c in nvda.synthIndexReached.calls)
 		ssml = [c for c in driver_module._test.espeak.calls if c[0] == "synth"][-1][1]
 		assert ssml == 'Hello<mark name="1"/> world<mark name="2"/>'
 	finally:
@@ -313,3 +313,27 @@ def test_panel_instructions_are_the_accessible_description(nvda):
 	description = panel_mod.MbrolaVoicesPanel.panelDescription
 	assert "github.com/numediart/MBROLA-voices" in description
 	assert "folder" in description
+
+
+def test_driver_is_freed_as_soon_as_nvda_drops_it(driver_module):
+	"""Regression: NVDA's Voice settings panel rebuilds itself only when the old synth object dies
+	(it watches it through a weakref). Reference cycles (engine callbacks bound to the driver) kept
+	our driver alive until Python's cycle collector happened to run, so after switching to another
+	synth the panel kept showing MBROLA voices until the settings were applied.
+	"""
+	import gc
+	import weakref
+
+	install_voice(driver_module._test.layout, "en1")
+	gc.collect()
+	gc.disable()
+	try:
+		synth = driver_module.SynthDriver()
+		ref = weakref.ref(synth)
+		synth.terminate()
+		del synth
+		assert ref() is None, "driver still alive after NVDA released it: " + repr(
+			[type(r).__name__ for r in gc.get_referrers(ref())],
+		)
+	finally:
+		gc.enable()

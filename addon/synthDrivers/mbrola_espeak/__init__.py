@@ -8,6 +8,7 @@ Everything that can be decided without NVDA is decided in ``core``.
 from __future__ import annotations
 
 import os
+import weakref
 from collections import OrderedDict
 
 import addonHandler
@@ -66,6 +67,18 @@ def voice_display_name(definition: MbrolaVoiceDefinition, home: MbrolaVoiceDefin
 	return f"{label}, MBROLA {definition.database} ({definition.identifier})"
 
 
+def _weak_callback(method):
+	"""Wrap a bound method so the wrapper does not keep its object alive."""
+	ref = weakref.WeakMethod(method)
+
+	def call(*args, **kwargs):
+		target = ref()
+		if target is not None:
+			target(*args, **kwargs)
+
+	return call
+
+
 class SynthDriver(BaseSynthDriver):
 	name = DRIVER_NAME
 	# Translators: name of the synthesizer in NVDA's synthesizer list.
@@ -104,12 +117,16 @@ class SynthDriver(BaseSynthDriver):
 			)
 		binding = EspeakBinding(layout.espeak_library, layout.mbrola_library, layout.espeak_home)
 		log.info(f"{DRIVER_NAME}: eSpeak NG {binding.version()}, {len(self._definitions)} MBROLA voices")
+		# Weak callbacks: the engine must not keep this driver alive. NVDA's Voice
+		# settings panel only rebuilds itself once the previous synth object is gone,
+		# so a driver kept alive by a reference cycle left MBROLA voices on screen
+		# after switching to another synthesizer.
 		self._engine = SpeechEngine(
 			binding,
 			WavePlayerSink(),
-			on_index=self._on_index,
-			on_done=self._on_done,
-			on_error=self._on_error,
+			on_index=_weak_callback(self._on_index),
+			on_done=_weak_callback(self._on_done),
+			on_error=_weak_callback(self._on_error),
 		)
 		default = choose_default(
 			self._definitions,

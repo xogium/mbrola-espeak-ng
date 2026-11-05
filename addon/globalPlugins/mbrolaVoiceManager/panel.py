@@ -92,6 +92,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 			self,
 			# Translators: title of the file dialog for importing MBROLA voices.
 			message=_("Choose MBROLA voice files or zip archives (several can be selected)"),
+			# Translators: file type shown in the file dialog for importing MBROLA voices.
 			wildcard=_("MBROLA voices and zip archives") + " (*.*)|*.*",
 			style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE,
 		) as dialog:
@@ -105,6 +106,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 			gui.messageBox(
 				# Translators: shown when the web browser could not be opened.
 				_("Could not open the web browser. The address is {url}").format(url=VOICES_DOWNLOAD_URL),
+# Translators: title of an error message in the MBROLA voices settings.
 				_("MBROLA voices"),
 				wx.OK | wx.ICON_ERROR,
 				self,
@@ -130,7 +132,9 @@ class MbrolaVoicesPanel(SettingsPanel):
 			return
 		name = self._entries[index].name
 		answer = gui.messageBox(
+			# Translators: asks before removing an MBROLA voice; {name} is the voice, e.g. en1.
 			_("Remove the MBROLA voice {name}?").format(name=name),
+			# Translators: title of the message asking before removing an MBROLA voice.
 			_("Confirm removal"),
 			wx.YES_NO | wx.ICON_QUESTION,
 			self,
@@ -148,6 +152,7 @@ class MbrolaVoicesPanel(SettingsPanel):
 				log.error("Could not reload the MBROLA synthesizer", exc_info=True)
 		gui.messageBox(
 			outcome.message,
+# Translators: title of the result of importing or removing MBROLA voices.
 			_("MBROLA voices"),
 			wx.OK | (wx.ICON_ERROR if outcome.is_error else wx.ICON_INFORMATION),
 			self,

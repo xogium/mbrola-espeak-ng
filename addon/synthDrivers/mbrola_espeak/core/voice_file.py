@@ -25,7 +25,7 @@ import struct
 from pathlib import Path
 from typing import BinaryIO
 
-from .errors import InvalidVoiceFileError
+from .errors import N_, InvalidVoiceFileError
 
 MAGIC = b"MBROLA"
 HEADER_PROBE_SIZE = 64
@@ -44,12 +44,15 @@ class MbrolaVoiceHeader:
 def parse_header(data: bytes) -> MbrolaVoiceHeader:
 	"""Parse the first bytes of a voice database. Raises :class:`InvalidVoiceFileError`."""
 	if len(data) < 6 or not data.startswith(MAGIC):
-		raise InvalidVoiceFileError("This is not an MBROLA voice file (the MBROLA signature is missing).")
+		# Translators: import error for a file that is not an MBROLA voice.
+		raise InvalidVoiceFileError(N_("This is not an MBROLA voice file (the MBROLA signature is missing)."))
 	if len(data) < 17:
-		raise InvalidVoiceFileError("The MBROLA voice file is truncated.")
+		# Translators: import error for an incomplete voice file.
+		raise InvalidVoiceFileError(N_("The MBROLA voice file is truncated."))
 	version = data[6:11]
 	if not _VERSION_RE.match(version):
-		raise InvalidVoiceFileError("The MBROLA voice file has an unreadable format version.")
+		# Translators: import error for a damaged voice file.
+		raise InvalidVoiceFileError(N_("The MBROLA voice file has an unreadable format version."))
 	(diphones,) = struct.unpack_from("<h", data, 11)
 	(old_mark_size,) = struct.unpack_from("<H", data, 13)
 	offset = 15
@@ -57,12 +60,18 @@ def parse_header(data: bytes) -> MbrolaVoiceHeader:
 		offset += 4  # new format: an int32 mark size follows
 	offset += 4  # int32 raw size
 	if len(data) < offset + 2:
-		raise InvalidVoiceFileError("The MBROLA voice file is truncated.")
+		# Translators: import error for an incomplete voice file.
+		raise InvalidVoiceFileError(N_("The MBROLA voice file is truncated."))
 	(rate,) = struct.unpack_from("<h", data, offset)
 	if diphones <= 0:
-		raise InvalidVoiceFileError("The MBROLA voice file contains no diphones.")
+		# Translators: import error for an empty voice file. Diphones are the sound units of a voice.
+		raise InvalidVoiceFileError(N_("The MBROLA voice file contains no diphones."))
 	if not _MIN_RATE <= rate <= _MAX_RATE:
-		raise InvalidVoiceFileError(f"The MBROLA voice file has an implausible sample rate ({rate} Hz).")
+		raise InvalidVoiceFileError(
+			# Translators: import error; {rate} is a number of samples per second.
+			N_("The MBROLA voice file has an implausible sample rate ({rate} Hz)."),
+			rate=rate,
+		)
 	return MbrolaVoiceHeader(format_version=version.decode("ascii"), diphone_count=diphones, sample_rate=rate)
 
 
@@ -75,4 +84,9 @@ def read_header_from_path(path: Path) -> MbrolaVoiceHeader:
 		with open(path, "rb") as f:
 			return read_header(f)
 	except OSError as e:
-		raise InvalidVoiceFileError(f"Could not read {path.name}: {e.strerror or e}") from e
+		raise InvalidVoiceFileError(
+			# Translators: {file} is a file name, {reason} the system's error message.
+			N_("Could not read {file}: {reason}"),
+			file=path.name,
+			reason=e.strerror or str(e),
+		) from e

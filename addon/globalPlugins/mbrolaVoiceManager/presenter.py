@@ -42,15 +42,22 @@ class VoiceManagerPresenter:
 		self._expected = expected_errors
 		self._ = translate
 
+	def _describe(self, error: BaseException) -> str:
+		"""The error's message in the user's language (core errors carry an English template)."""
+		translated = getattr(error, "translated", None)
+		return translated(self._) if callable(translated) else str(error)
+
 	def entries(self) -> list[VoiceEntry]:
 		_ = self._
 		speakable = self._library.speakable_definitions()
 		entries = []
 		for voice in self._library.installed_voices():
 			variants = [d.identifier for d in speakable if d.database == voice.name]
+			# Translators: an installed MBROLA voice in the list, e.g. "fr1, 16000 Hz, voices: mb-fr1, mb-fr1-en".
 			label = _("{name}, {rate} Hz, voices: {variants}").format(
 				name=voice.name,
 				rate=voice.header.sample_rate,
+				# Translators: shown instead of a list of voices when there are none.
 				variants=", ".join(variants) or _("none"),
 			)
 			entries.append(VoiceEntry(voice.name, label))
@@ -64,19 +71,23 @@ class VoiceManagerPresenter:
 			try:
 				voices, report = self._library.import_path(Path(path))
 			except self._expected as e:
-				problems.append(f"{Path(path).name}: {e}")
+				problems.append(f"{Path(path).name}: {self._describe(e)}")
 				continue
 			imported.extend(v.name for v in voices)
 			problems.extend(
+				# Translators: an imported voice is in use; {error} is the system's error message.
 				_("{name} will be updated after NVDA restarts the synthesizer ({error})").format(name=n, error=err)
 				for n, err in report.failed.items()
 			)
 		parts = []
 		if imported:
+			# Translators: result of an import; {names} is a list such as "en1, fr1".
 			parts.append(_("Imported: {names}.").format(names=", ".join(sorted(set(imported)))))
 		if problems:
+			# Translators: follows a list of import problems, one sentence each.
 			parts.append(_("Problems: {details}").format(details=" ".join(problems)))
 		if not parts:
+			# Translators: result of an import that found no voice.
 			parts.append(_("Nothing was imported."))
 		return Outcome(" ".join(parts), is_error=not imported, voices_changed=bool(imported))
 
@@ -85,13 +96,15 @@ class VoiceManagerPresenter:
 		try:
 			report = self._library.remove(name)
 		except self._expected as e:
-			return Outcome(str(e), is_error=True, voices_changed=False)
+			return Outcome(self._describe(e), is_error=True, voices_changed=False)
 		if name in report.failed:
 			return Outcome(
+				# Translators: a removed voice is still in use by the synthesizer.
 				_("{name} was removed. Its file is still in use and will be deleted when the synthesizer restarts.").format(
 					name=name,
 				),
 				is_error=False,
 				voices_changed=True,
 			)
+		# Translators: result of removing an MBROLA voice, e.g. "en1 was removed."
 		return Outcome(_("{name} was removed.").format(name=name), is_error=False, voices_changed=True)

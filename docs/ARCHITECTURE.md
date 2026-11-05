@@ -30,6 +30,17 @@ Rules:
 - Dependencies inside `core` only point downwards (see `core/__init__.py`).
 - Each core module has one job and its own test file.
 
+## Translated messages
+
+NVDA gives an add-on its translations through `addonHandler.initTranslation()`,
+which only works in modules of the add-on, so `core` cannot use gettext.
+Instead, a core error a user may see is raised with an English template
+marked `N_("Could not read {file}: {reason}")` and named values. `str(error)`
+stays English, for logs. The settings presenter shows
+`error.translated(_)`, which looks the template up in the add-on's
+translation and fills in the values. `tools/i18n.py` collects the `_()` and
+`N_()` strings alike.
+
 ## Threads
 
 There is one worker thread per engine. It makes every eSpeak NG call

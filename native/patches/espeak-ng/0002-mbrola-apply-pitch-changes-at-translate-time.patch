@@ -1,0 +1,53 @@
+Apply SSML pitch changes in time for MBROLA voices.
+
+With a normal eSpeak NG voice, a pitch change from SSML (for example
+<prosody pitch="175%">) becomes an embedded command. DoEmbedded() puts it
+in the wave command queue, and the wave generator applies it when it
+reaches that point in the audio. That is right for eSpeak's own
+synthesizer, which reads the pitch while it makes the sound.
+
+MBROLA voices work differently. MbrolaTranslate() computes each
+phoneme's pitch points (WritePitch() -> SetPitch2()) and sends them to
+MBROLA as soon as the phoneme is translated. That happens before the
+wave generator has taken the queued pitch command, so the phonemes the
+change was meant for are already written with the old pitch. The change
+lands afterwards, usually together with the command that undoes it.
+
+The result in NVDA: "Capital pitch change percentage" does nothing,
+because NVDA raises the pitch of a capital letter with a PitchCommand,
+which the driver sends as <prosody pitch="...">. Pitch range and the
+punctuation tone have the same problem. Worse, when MbrolaTranslate()
+stops because the queue is full, the wave generator can apply a stale
+pitch command in the middle of the clause and the rest of the clause is
+spoken at the wrong pitch.
+
+When an MBROLA voice is active, apply pitch, pitch range and tone
+commands immediately in DoEmbedded(), the same way the speed command is
+already handled, instead of queueing them. Normal eSpeak voices are not
+affected. espeak_ng_Cancel() already restores the parameters, so a
+cancelled utterance cannot leave the pitch raised.
+
+diff --git a/src/libespeak-ng/synthesize.c b/src/libespeak-ng/synthesize.c
+index 1ca14e1..bdf038d 100644
+--- a/src/libespeak-ng/synthesize.c
++++ b/src/libespeak-ng/synthesize.c
+@@ -1105,6 +1105,19 @@ void DoEmbedded(int *embix, int sourceix)
+ 		case EMBED_U: // play sound
+ 			DoMarker(espeakEVENT_PLAY, count_characters+1, 0, value); // always occurs at end of clause
+ 			break;
++		case EMBED_P: // pitch
++		case EMBED_R: // pitch range
++		case EMBED_T: // tone for announcing punctuation
++#if USE_MBROLA
++			if (mbrola_name[0] != 0) {
++				// MBROLA voices get their pitch when each phoneme is translated
++				// (WritePitch() in synth_mbrola.c), long before wavegen would
++				// apply a queued command. Apply the change now.
++				SetEmbedded(command, value);
++				break;
++			}
++#endif
++			// fall through
+ 		default:
+ 			DoPause(10, 0); // ensure a break in the speech
+ 			wcmdq[wcmdq_tail][0] = WCMD_EMBEDDED;

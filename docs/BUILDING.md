@@ -70,5 +70,9 @@ Each patch starts with a plain-language explanation. In short:
   `init_MBR()` leaked the previous voice on every voice switch.
 - `espeak-ng/0001`: after an MBROLA voice had been used, normal eSpeak NG
   voices stayed at the MBROLA sample rate (16 kHz instead of 22.05 kHz).
+- `espeak-ng/0002`: with MBROLA voices, pitch changes from SSML
+  (`<prosody pitch>`) were applied only after the phonemes they were meant
+  for had been sent to MBROLA, so they had no effect. NVDA uses this to
+  raise the pitch of capital letters ("Capital pitch change percentage").
 
-All three are worth sending upstream.
+All four are worth sending upstream.

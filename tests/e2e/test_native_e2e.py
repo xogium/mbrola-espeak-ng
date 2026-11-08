@@ -25,8 +25,8 @@ from core.engine import SpeechEngine
 from core.errors import NativeLibraryError
 from core.espeak_binding import EspeakBinding
 from core.layout import AddonLayout
-from core.params import RATE, EspeakParameter
-from core.speech_items import Index, Text
+from core.params import PITCH, RATE, EspeakParameter
+from core.speech_items import Index, Prosody, Text
 from core.ssml import build_ssml
 from core.voice_file import read_header_from_path
 from core.voice_library import VoiceLibrary
@@ -103,6 +103,29 @@ def peak(pcm: bytes) -> int:
 	return max((abs(s) for s in samples), default=0)
 
 
+def median_pitch_hz(pcm: bytes, rate: int) -> float:
+	"""Rough fundamental frequency of the voiced parts of ``pcm`` (autocorrelation, median over frames)."""
+	samples = array.array("h", pcm[: len(pcm) // 2 * 2])
+	frame, hop = rate // 25, rate // 50
+	shortest, longest = rate // 400, rate // 60
+	estimates = []
+	for start in range(0, len(samples) - frame - longest, hop):
+		window = samples[start : start + frame + longest]
+		energy = sum(v * v for v in window[:frame])
+		if energy < frame * 300**2:
+			continue  # silence
+		best, best_lag = 0, 0
+		for lag in range(shortest, longest):
+			c = sum(window[i] * window[i + lag] for i in range(0, frame, 2))
+			if c > best:
+				best, best_lag = c, lag
+		if best_lag and best > energy / 4:
+			estimates.append(rate / best_lag)
+	assert estimates, "no voiced audio"
+	estimates.sort()
+	return estimates[len(estimates) // 2]
+
+
 # --- voices and catalog ---------------------------------------------------------
 
 
@@ -166,6 +189,33 @@ def test_native_rate_is_restored_after_mbrola(binding):
 	assert binding.sample_rate() == 16000
 	binding.set_voice("en")
 	assert binding.sample_rate() == 22050
+
+
+@pytest.mark.parametrize("voice", ["mb-en1", "mb-us1", "en"])
+def test_prosody_pitch_reaches_the_voice(binding, library, voice):
+	"""Regression test for native/patches/espeak-ng/0002.
+
+	NVDA raises the pitch of capital letters with a PitchCommand, which the
+	driver sends as <prosody pitch="...%">. Unpatched eSpeak NG applied it
+	after MBROLA had already been given the phonemes, so capitals sounded
+	exactly like lower-case letters with MBROLA voices.
+	"""
+	if voice.startswith("mb-") and voice[3:] not in library.store.installed_names():
+		pytest.skip(f"{voice[3:]} voice not available")
+	binding.set_voice(voice)
+	binding.set_parameter(EspeakParameter.PITCH, PITCH.from_percent(40))
+	rate = binding.sample_rate()
+
+	def pitch_of(*items):
+		return median_pitch_hz(synth_all(binding, build_ssml(items)), rate)
+
+	normal = pitch_of(Text("A"))
+	# What NVDA sends for a capital at pitch 40 with "capital pitch change" 30: 70 / 40.
+	capital = pitch_of(Prosody("pitch", 1.75), Text("A"), Prosody("pitch", 1.0))
+	afterwards = pitch_of(Text("A"))
+	assert capital > normal * 1.15, (normal, capital)
+	# The raised pitch must not leak into the next utterance.
+	assert abs(afterwards - normal) < normal * 0.05, (normal, afterwards)
 
 
 def test_switching_voices_repeatedly_does_not_crash(binding, library):

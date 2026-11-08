@@ -19,7 +19,7 @@ def test_real_manifest_targets_64_bit_nvda():
 def test_real_manifest_author_and_version():
 	m = build_addon.read_manifest(build_addon.ADDON_DIR)
 	assert m["author"] == "Casey Reeves"
-	assert m["version"] == "0.2.0"
+	assert m["version"] == "0.3.0"
 
 
 def test_pyproject_version_matches_manifest():
@@ -82,7 +82,7 @@ def test_refuses_32_bit_dlls(addon_copy, tmp_path):
 def test_builds_package(addon_copy, tmp_path):
 	add_native(addon_copy)
 	target = build_addon.build(addon_copy, tmp_path / "dist")
-	assert target.name == "mbrolaEspeak-0.2.0.nvda-addon"
+	assert target.name == "mbrolaEspeak-0.3.0.nvda-addon"
 	names = set(zipfile.ZipFile(target).namelist())
 	assert "manifest.ini" in names
 	assert "synthDrivers/mbrola_espeak/__init__.py" in names

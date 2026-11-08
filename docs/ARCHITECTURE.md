@@ -89,7 +89,7 @@ MBROLA voices are almost all 16 kHz; eSpeak NG's own voices are 22.05 kHz.
 The sink is told the rate after every voice change (`espeak_ng_GetSampleRate`).
 Within one utterance the rate is assumed constant, which is why automatic
 language switching (which can jump between an MBROLA voice and an eSpeak
-voice mid-sentence) is not advertised to NVDA (still true in v0.2).
+voice mid-sentence) is not advertised to NVDA (still true in v0.3).
 
 ## Voices
 
